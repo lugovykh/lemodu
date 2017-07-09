@@ -1,0 +1,27 @@
+<template>
+  <style>
+    :host {
+      display: block;
+      margin: 8px;
+      padding: 16px;
+      background-color: #F5F5F5;
+      border-radius: 2px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+
+    :host(.info) {
+      background-color: green;
+    }
+
+    :host(.warning) {
+      background-color: red;
+    }
+  </style>
+
+  <div class="title"><slot name="title"></slot></div>
+  <div class="author"><slot name="author"></slot></div>
+  <div class="date"><slot name="date"></slot></div>
+  <div class="content"><slot></slot></div>
+</template>
+
+<script defer src="script.js"></script>
