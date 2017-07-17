@@ -1,0 +1,12 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-flow: column;
+  margin: 0;
+  font-family: Roboto, 'Segoe UI', Tahoma, sans-serif;
+  font-size: 1em;
+  background-color: #F7F7F7;
+}

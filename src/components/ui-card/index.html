@@ -1,20 +1,28 @@
 <template>
   <style>
     :host {
-      display: block;
-      margin: 8px;
+      display: flex;
+      flex-flow: column;
+      margin: 16px auto;
       padding: 16px;
-      background-color: #F5F5F5;
+      min-width: 24em;
+      max-width: 40em;
+      background-color: #FFF;
       border-radius: 2px;
       box-shadow: 0 1px 4px rgba(0,0,0,.2);
     }
-
-    :host(.info) {
-      background-color: green;
+    .title ::slotted(*) {
+      margin: 0;
+      font-size: 1.2em;
+      color: #000;
     }
-
-    :host(.warning) {
-      background-color: red;
+    .date ::slotted(*) {
+      font-size: .9em;
+      color: #888;
+    }
+    .content ::slotted(*) {
+      text-align: justify;
+      color: #444;
     }
   </style>
 
