@@ -2,18 +2,19 @@
   "name": "lemodu",
   "version": "0.0.0",
   "description": "First experience",
-  "main": "index.html",
+  "main": "server.js",
   "scripts": {
     "test": "node server.js"
   },
-  "repository": "lugovykh/lemodu",
-  "keywords": [
-    "news"
-  ],
-  "author": "Sergey Lugovykh",
+  "repository": "github:lugovykh/lemodu",
+  "author": {
+    "name": "Sergey Lugovykh",
+    "email": "sslugovykh@gmail.com",
+    "url": "https://vk.com/sergey.lugovykh"
+  },
   "license": "MIT",
-  "devDependencies": {
-    "koa": "^2.3.0",
-    "koa-static": "^4.0.0"
+  "dependencies": {
+    "koa": "2.x",
+    "koa-static": "4.x"
   }
 }
