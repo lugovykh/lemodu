@@ -1,10 +1,22 @@
-import '/elements/app-card/app-card.js';
-
 const template = document.createElement('template');
 template.innerHTML = `
   <slot name="header"></slot>
   <slot></slot>
 `;
+
+import Router from '/modules/router.js';
+import '/pages/news.js';
+import '/pages/user.js';
+
+const DEFAULT_PAGE = 'news-page';
+
+window.router = new Router({
+   '/': DEFAULT_PAGE,
+   '/news': 'news-page',
+   '/news/:id': 'news-page',
+   '/users': 'user-page',
+   '/users/:id': 'userPage'
+});
 
 class AppBody extends HTMLElement {
   constructor() {
@@ -15,27 +27,34 @@ class AppBody extends HTMLElement {
   }
 
   async connectedCallback() {
-    let response = await fetch('/news.json');
-    let data = await response.json();
-    let fields = new Map();
+    await this.render();
 
-    fields.set('title', 'h2');
-    fields.set('date', 'time');
-    fields.set('author', 'span');
-    fields.set('content');
+    addEventListener('popstate', async e => {
+      await this.render();
+    });
+  }
 
-    for (let item in data) {
-      let card = document.createElement('app-card');
+  async render() {
+    let newPage;
 
-      for (let key of fields.keys()) {
-        let element = document.createElement(fields.get(key) || 'div');
-        element.setAttribute('slot', key);
-        element.append(data[item][key]);
+    if (router.history.has(location.pathname)) {
+      newPage = router.history.get(location.pathname);
+      console.log('The page was taken from history.');
 
-        card.append(element);
-      }
-      this.append(card);
+    } else {
+      let pageTag = router.routes.get(router.path[0]);
+      newPage = document.createElement(pageTag);
+      console.log('A new page has been created.');
     }
+
+    if (this.currentPage) {
+      this.currentPage.replaceWith(newPage);
+    } else {
+      this.append(newPage);
+    }
+
+    router.history.set(location.pathname, newPage);
+    this.currentPage = newPage;
   }
 }
 

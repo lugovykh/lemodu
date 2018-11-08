@@ -12,13 +12,16 @@ template.innerHTML = `
       border-radius: 2px;
       box-shadow: 0 1px 4px rgba(0,0,0,.2);
     }
+    ::slotted(h2),
     [name=title]::slotted(*) {
       margin: 0;
-      font-size: 1.2em;
+      font-size: 1.4em;
+      font-weight: normal;
       color: #000;
+      text-decoration: none;
     }
-    [name=date]::slotted(*),
-    [name=author]::slotted(*) {
+    ::slotted(span),
+    ::slotted(time) {
       font-size: .9em;
       color: #888;
     }
@@ -28,11 +31,18 @@ template.innerHTML = `
       color: #444;
     }
   </style>
-
+  <!-- article -->
   <slot name="title"></slot>
   <slot name="date"></slot>
   <slot name="author"></slot>
   <slot name="content"></slot>
+  <!-- user -->
+  <slot name="nickname"></slot>
+  <slot name="first-name"></slot>
+  <slot name="last-name"></slot>
+  <slot name="birthday"></slot>
+  <slot name="about"></slot>
+  <slot></slot>
 `;
 
 class AppCard extends HTMLElement {
