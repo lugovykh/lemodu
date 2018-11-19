@@ -59,16 +59,17 @@ class NewsPage extends HTMLElement {
       this.append(card);
     };
 
+    let page = router.path[0] || router.routes.get('');
     let id = router.path[1];
 
     if (id) {
-      let response = await fetch(`/news${id}.json`);
+      let response = await fetch(`/${page}/${id}.json`);
       let data = await response.json();
 
       createCard(data)
 
     } else {
-      let response = await fetch(`/news.json`);
+      let response = await fetch(`/${page}.json`);
       let data = await response.json();
 
       for (id in data) {
@@ -79,4 +80,4 @@ class NewsPage extends HTMLElement {
   }
 }
 
-customElements.define('news-page', NewsPage);
+customElements.define('app-page', NewsPage);

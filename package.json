@@ -16,6 +16,7 @@
   "dependencies": {
     "fastify": "1.x",
     "fastify-auto-push": "0.x",
+    "fastify-static": "^0.14.0",
     "koa": "2.x",
     "koa-send": "^5.0.0",
     "koa-static": "4.x"

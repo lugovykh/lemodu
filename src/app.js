@@ -5,17 +5,17 @@ template.innerHTML = `
 `;
 
 import Router from '/modules/router.js';
-import '/pages/news.js';
-import '/pages/user.js';
+import '/elements/app-header/app-header.js';
+import '/elements/app-page/app-page.js';
 
-const DEFAULT_PAGE = 'news-page';
+const defaultPage = 'news';
 
 window.router = new Router({
-   '/': DEFAULT_PAGE,
-   '/news': 'news-page',
-   '/news/:id': 'news-page',
-   '/users': 'user-page',
-   '/users/:id': 'userPage'
+  '': defaultPage,
+  'news': 'news-page',
+  'news/:id': 'news-page',
+  'users': 'user-page',
+  'users/:id': 'userPage'
 });
 
 class AppBody extends HTMLElement {
@@ -29,7 +29,7 @@ class AppBody extends HTMLElement {
   async connectedCallback() {
     await this.render();
 
-    addEventListener('popstate', async e => {
+    addEventListener('popstate', async () => {
       await this.render();
     });
   }
@@ -42,8 +42,8 @@ class AppBody extends HTMLElement {
       console.log('The page was taken from history.');
 
     } else {
-      let pageTag = router.routes.get(router.path[0]);
-      newPage = document.createElement(pageTag);
+      // let pageTag = router.routes.get(router.path[0]);
+      newPage = document.createElement('app-page');
       console.log('A new page has been created.');
     }
 

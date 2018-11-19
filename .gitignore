@@ -1,2 +1,2 @@
-node_modules/
-*.cmd
+/.*/
+/node_modules/

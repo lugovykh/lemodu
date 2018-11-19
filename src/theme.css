@@ -10,3 +10,7 @@ body {
   font-size: 1em;
   background-color: #f7f7f7;
 }
+
+a.invalid {
+  text-decoration: line-through;
+}

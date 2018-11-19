@@ -30,6 +30,9 @@ template.innerHTML = `
       text-align: justify;
       color: #444;
     }
+    ::slotted(div) {
+      white-space: pre-wrap;
+    }
   </style>
   <!-- article -->
   <slot name="title"></slot>
