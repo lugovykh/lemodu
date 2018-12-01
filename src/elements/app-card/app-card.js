@@ -52,8 +52,8 @@ class AppCard extends HTMLElement {
   constructor() {
     super();
 
-    const shadowRoot = this.attachShadow({mode: 'open'});
-    shadowRoot.append(template.content.cloneNode(true));
+    this.attachShadow({mode: 'open'});
+    this.shadowRoot.append(template.content.cloneNode(true));
   }
 }
 

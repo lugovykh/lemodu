@@ -4,26 +4,20 @@ template.innerHTML = `
   <slot></slot>
 `;
 
+import DataBase from '/modules/db.js';
 import Router from '/modules/router.js';
 import '/elements/app-header/app-header.js';
 import '/elements/app-page/app-page.js';
 
-const defaultPage = 'news';
-
-window.router = new Router({
-  '': defaultPage,
-  'news': 'news-page',
-  'news/:id': 'news-page',
-  'users': 'user-page',
-  'users/:id': 'userPage'
-});
+window.db = new DataBase();
+window.router = new Router('news', 'users');
 
 class AppBody extends HTMLElement {
   constructor() {
     super();
 
-    const shadowRoot = this.attachShadow({mode: 'open'});
-    shadowRoot.append(template.content.cloneNode(true));
+    this.attachShadow({mode: 'open'});
+    this.shadowRoot.append(template.content.cloneNode(true));
   }
 
   async connectedCallback() {
@@ -42,7 +36,6 @@ class AppBody extends HTMLElement {
       console.log('The page was taken from history.');
 
     } else {
-      // let pageTag = router.routes.get(router.path[0]);
       newPage = document.createElement('app-page');
       console.log('A new page has been created.');
     }

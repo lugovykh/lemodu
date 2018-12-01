@@ -1,6 +1,9 @@
 {
   "title": "Hello 🌍!",
   "date": "2017-07-08",
-  "author": "admin",
+  "author": {
+    "id": 0,
+    "nickname": "admin"
+  },
   "content": "Hello anyone! It's my second news.\nHello anyone! It's my second news.\nHello anyone! It's my second news."
 }

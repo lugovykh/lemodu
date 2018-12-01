@@ -2,13 +2,19 @@
   "0": {
     "title": "Hello World!",
     "date": "2017-07-07",
-    "author": "admin",
+    "author": {
+      "id": 0,
+      "nickname": "admin"
+    },
     "content": "Hello everyone! It's my first news."
   },
   "1": {
     "title": "Hello 🌍!",
     "date": "2017-07-08",
-    "author": "admin",
+    "author": {
+      "id": 0,
+      "nickname": "admin"
+    },
     "content": "Hello anyone! It's my second news."
   }
 }

@@ -5,12 +5,12 @@ template.innerHTML = `
 
 import '/elements/app-card/app-card.js';
 
-class NewsPage extends HTMLElement {
+class AppPage extends HTMLElement {
   constructor() {
     super();
 
-    const shadowRoot = this.attachShadow({mode: 'open'});
-    shadowRoot.append(template.content.cloneNode(true));
+    this.attachShadow({mode: 'open'});
+    this.shadowRoot.append(template.content.cloneNode(true));
   }
 
   async connectedCallback() {
@@ -22,16 +22,27 @@ class NewsPage extends HTMLElement {
   }
 
   async render() {
+    let startTime = Date.now();
     if (router.history.has(location.pathname)) return;
 
-    let fields = new Map()
+    let visibleFields = {};
+
+    visibleFields.news = new Map()
       .set('title', {tag: 'h2'})
       .set('date', {tag: 'time'})
       .set('author', {tag: 'span'})
       .set('content', {});
 
-    let createCard = entry => {
+    visibleFields.users = new Map()
+      .set('nickname', {tag: 'h2'})
+      .set('first-name', {tag: 'span'})
+      .set('birthday', {tag: 'time'})
+      .set('last-name', {tag: 'span'})
+      .set('about', {});
+
+    let createCard = async entry => {
       let card = document.createElement('app-card');
+      let fields = visibleFields[type];
 
       for (let key of fields.keys()) {
         let tag = fields.get(key).tag || 'div';
@@ -39,12 +50,18 @@ class NewsPage extends HTMLElement {
         let element;
 
         if (key == 'title' || key == 'author') {
-          element = document.createElement('a');
-          element.setAttribute('href', `/news/${id}`);
+          let link = document.createElement('a');
+          link.setAttribute('href', router.getUri({type, id}));
+ 
           if (key == 'author') {
-            element.setAttribute('href', `/users/${id}`);
+            link.setAttribute('href',
+              router.getUri({type: 'users', id: [value.id]})
+            );
           }
-          element.append(value)
+          link.append(value.nickname || value)
+
+          element = document.createElement(tag);
+          element.append(link)
 
         } else {
           element = document.createElement(tag);
@@ -56,28 +73,29 @@ class NewsPage extends HTMLElement {
         element.setAttribute('slot', key);
         card.append(element);
       }
-      this.append(card);
+      return card;
     };
 
-    let page = router.path[0] || router.routes.get('');
-    let id = router.path[1];
+    let {type = 'news', id} = router.opts;
+    let card;
 
     if (id) {
-      let response = await fetch(`/${page}/${id}.json`);
-      let data = await response.json();
+      let data = await db.get({type, id});
 
-      createCard(data)
+      card = await createCard(data);
+      this.append(card);
 
     } else {
-      let response = await fetch(`/${page}.json`);
-      let data = await response.json();
+      let data = await db.get({type});
 
-      for (id in data) {
+      for (id of Object.keys(data)) {
         let entry = data[id];
-        createCard(entry)
+        card = await createCard(entry);
+        this.append(card);
       }
+      console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`);
     }
   }
 }
 
-customElements.define('app-page', NewsPage);
+customElements.define('app-page', AppPage);

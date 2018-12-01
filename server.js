@@ -7,13 +7,14 @@ const dbDir = path.join(__dirname, 'db');
 const hostname = 'localhost';
 const port = 3000;
 const contentTypes = new Map()
-  .set('js', 'application/javascript')
-  .set('css', 'text/css')
-  .set('json', 'application/json')
-  .set('png', 'image/png')
-  .set('svg', 'image/svg+xml');
+  .set('.js', 'application/javascript')
+  .set('.css', 'text/css')
+  .set('.json', 'application/json')
+  .set('.png', 'image/png')
+  .set('.svg', 'image/svg+xml');
 
-async function sendFile(file, res) {
+async function sendFile(source, res) {
+  let file = new fs.ReadStream(source);
   file.pipe(res);
 
   file.on('error', (err) => {
@@ -27,27 +28,47 @@ async function sendFile(file, res) {
   });
 }
 
+async function getOpts(strPath) {
+  let rawOpts = strPath.split('?')[1].split('&');
+  let opts = new Map();
+
+  for (let entry of rawOpts) {
+    opts.set(...entry.split('='));
+  }
+  return opts;
+}
+
 new http.Server(async (req, res) => {
   let sourceDir = staticDir;
-  let fileExtension = req.url.match(/(?<=\.)\w+$/);
-  
+  let url = req.url;
+
+  let isForDataBase = /^\/get[\#\?$]/.test(url);
+  if (isForDataBase) {
+    let opts = await getOpts(url);
+    sourceDir = dbDir;
+    url = `/${opts.get('type')}/${opts.get('id')}.json`
+    if (opts.size === 1) {
+      url = `/${opts.get('type')}.json`
+    }
+  }
+
+  let fileExtension = url.match(/\.[\w\n]{1,6}$/);
+
   fileExtension = fileExtension ? fileExtension[0] : null;
   res.statusCode = 200;
 
   if (fileExtension && contentTypes.has(fileExtension)) {
     res.setHeader('Content-Type', contentTypes.get(fileExtension));
 
-    if (fileExtension == 'json') {
+    if (fileExtension == '.json') {
       sourceDir = dbDir;
     }
-    let file = new fs.ReadStream(path.join(sourceDir, req.url));
-    await sendFile(file, res);
+    await sendFile(path.join(sourceDir, url), res);
 
   } else {
     res.setHeader('Content-Type', 'text/html');
 
-    let file = new fs.ReadStream(path.join(sourceDir, 'index.html'));
-    await sendFile(file, res);
+    await sendFile(path.join(sourceDir, 'index.html'), res);
   }
 }).listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
