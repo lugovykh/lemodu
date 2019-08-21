@@ -65,6 +65,10 @@ new http.Server(async (req, res) => {
 
     await sendFile(path.join(sourceDir, url), res);
 
+  } else if (/^\.?\/modules\//i.test(url) || /^\.?\/elements\//i.test(url)) {
+    res.setHeader('Content-Type', contentTypes.get('js'));
+    await sendFile(path.join(sourceDir, `${url}.js`), res);
+
   } else {
     res.setHeader('Content-Type', 'text/html');
 

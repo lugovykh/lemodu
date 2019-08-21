@@ -1,7 +1,7 @@
-import DataBase from '/modules/db.js';
-import Router from '/modules/router.js';
-import '/elements/app-header/app-header.js';
-import '/elements/app-page/app-page.js';
+import DataBase from '/modules/db';
+import Router from '/modules/router';
+import '/elements/app-header/app-header';
+import '/elements/app-page/app-page';
 
 const template = document.createElement('template');
 template.innerHTML = `
