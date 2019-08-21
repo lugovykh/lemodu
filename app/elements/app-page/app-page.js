@@ -1,23 +1,5 @@
 const template = document.createElement('template');
 template.innerHTML = `
-  <style>
-    :host {
-      grid-area: page;
-      display: grid;
-      grid: auto / repeat(auto-fill, minmax(400px, 1fr));
-      grid-gap: 32px;
-      padding: 32px;
-    }
-    @media (max-width: 600px) {
-      :host {
-        padding: 32px 16px;
-      }
-    }
-    :host(.item) {
-      grid: auto / minmax(400px, 800px);
-      justify-content: center;
-    }
-  </style>
   <slot></slot>
 `;
 
@@ -33,11 +15,17 @@ class AppPage extends HTMLElement {
 
   async connectedCallback() {
     await this.render();
+
+    addEventListener('popstate', async e => {
+      await this.render();
+    });
   }
 
   async render() {
-    const startTime = Date.now();
-    const visibleFields = {};
+    let startTime = Date.now();
+    if (router.history.has(location.pathname)) return;
+
+    let visibleFields = {};
 
     visibleFields.news = new Map()
       .set('title', {tag: 'h2'})
@@ -52,55 +40,61 @@ class AppPage extends HTMLElement {
       .set('last-name', {tag: 'span'})
       .set('about', {});
 
-    let createCard = async (entry, destination) => {
-      const card = document.createElement('app-card');
-      const fields = visibleFields[type];
+    let createCard = async entry => {
+      let card = document.createElement('app-card');
+      let fields = visibleFields[type];
 
-      for await (const key of fields.keys()) {
-        const value = entry[key];
-        const tag = fields.get(key).tag || 'div';
-        const element = document.createElement(tag);
-        let content = value;
+      for (let key of fields.keys()) {
+        let tag = fields.get(key).tag || 'div';
+        let value = entry[key];
+        let element;
 
         if (key == 'title' || key == 'author') {
-          content = document.createElement('a');
-          content.setAttribute('href', await router.getUri({type, id}));
+          let link = document.createElement('a');
+          link.setAttribute('href', router.getUri({type, id}));
  
           if (key == 'author') {
-            content.setAttribute('href',
-              await router.getUri({type: 'users', id: [value.id]})
+            link.setAttribute('href',
+              router.getUri({type: 'users', id: [value.id]})
             );
           }
-          content.append(value.nickname || value);
+          link.append(value.nickname || value)
+
+          element = document.createElement(tag);
+          element.append(link)
+
+        } else {
+          element = document.createElement(tag);
+          element.append(value);
         }
         if (tag == 'time') {
           element.setAttribute('datetime', value);
         }
         element.setAttribute('slot', key);
-        element.append(content);
         card.append(element);
       }
-      if (destination) destination.append(card);
       return card;
     };
 
-    let opts = await router.getOpts();
-    if (!opts.size) opts.set('type', 'news');
-    let data = await db.get(opts);
-    let type = opts.get('type');
-    let id = opts.get('id');
+    let {type = 'news', id} = router.opts;
+    let card;
 
-    if (opts.has('id')) {
-      this.classList.add('item');
-      await createCard(data, this);
+    if (id) {
+      let data = await db.get({type, id});
 
-    } else {      
-      for await (id of Object.keys(data)) {
-        const entry = data[id];
-        await createCard(entry, this);
+      card = await createCard(data);
+      this.append(card);
+
+    } else {
+      let data = await db.get({type});
+
+      for (id of Object.keys(data)) {
+        let entry = data[id];
+        card = await createCard(entry);
+        this.append(card);
       }
+      console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`);
     }
-    console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`);
   }
 }
 

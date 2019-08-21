@@ -1,38 +1,32 @@
 export default class Router {
-  constructor(pages, pathKeys = ['type', 'id']) {
-    const startTime = Date.now();
-    history.replaceState(null, null,
-      `${this.normalizePathname()}${location.search}${location.hash}`
-    );
+  constructor(...pages) {
+    let startTime = Date.now();
+    history.replaceState(null, null, this.normalizePathname());
 
     this.pages = new Set(pages);
-    this.pathKeys = new Set(pathKeys);
+    this.opts = this.getOpts();
     this.history = new Map();
-    this._opts = new Map(); // cache
 
     addEventListener('click', async e => {
-      if (e.target.tagName != 'A'
-        || !e.target.href
-        || e.altKey
-        || e.ctrlKey
-        || e.shiftKey
-      ) return;
+      if (e.target.tagName != 'A' && !e.target.href) return;
+      if (e.altKey || e.ctrlKey || e.shiftKey) return;
       e.preventDefault();
 
-      if (e.target.classList.contains('invalid')) return;
-
       try {
-        // get the opts here to validate the link and, in the case of the wrong
-        // URI, so that the error pops up in the link listener and then there
-        // is an opportunity to process this invalid link
-        await this.getOpts(e.target);
-        await this.go(e.target);
-
-      } catch (err) {
+        await this.go(e.target.pathname);
+      } catch(err) {
         e.target.classList.add('invalid');
         throw err;
       }
     });
+
+    addEventListener('popstate', e => {
+      if (!e.isTrusted) return;
+
+      // here the path is updated in case of navigating through the browser
+      // history
+      this.opts = this.getOpts();
+    }, true);
 
     console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`);
   }
@@ -44,78 +38,53 @@ export default class Router {
     return strPath;
   }
 
-  async getOpts({ pathname, search } = location) {
-    const url = `${pathname}${search}`;
-    if (this._opts.has(url)) {
-      return this._opts.get(url);
+  getOpts(strPath = location.pathname) {
+    let path = this.normalizePathname(strPath).split('/');
+    let keys = ['type', 'id'];
+    let opts = {};
+
+    if (path.length > 3 || path.length > 2 && path[1] === '') {
+      throw new URIError(`Invalid path: ${strPath}`);
+    }
+    if (!this.pages.has(path[1]) && path[1] !== '') {
+      throw new URIError(`This page does not exist: ${strPath}`);
     }
 
-    let opts = new Map();
-    let rawOpts = this.normalizePathname(pathname).split('/').slice(1);
-    let rawOptsIterator = rawOpts.values();
+    for (let i of keys.keys()) {
+      let key = keys[i];
 
-    if (rawOpts[0] && !this.pages.has(rawOpts[0])) {
-      throw new URIError(`Invalid URI: ${url}`);
+      if (path[i+1]) opts[key] = path[i+1];
     }
 
-    for await (const key of this.pathKeys) {
-      const value = rawOptsIterator.next().value;
-
-      if (value) {
-        opts.set(key, value);
-
-      } else if (rawOptsIterator.next().value) {
-        throw new URIError(`Invalid URI: ${url}`);
-
-      } else break;
+    if (this.getUri(opts) != strPath) {
+      throw new URIError(`Invalid path: ${strPath}`);
     }
-
-    rawOpts = search.slice(1).split('&');
-
-    for await (const entry of rawOpts) {
-      if (!entry) break;
-
-      opts.set(...entry.split('='));
-    }
-
-    if (await this.getUri(opts) !== url) {
-      throw new URIError(`Invalid URI: ${url}`);
-    }
-
-    this._opts.clear();
-    this._opts.set(url, opts);
     return opts;
   }
 
-  async getUri(opts) {
-    let pathEntries = [];
-    let searchEntries = [];
+  getUri(opts) {
+    let keys = ['type', 'id'];
+    let uri = '';
 
-    opts = opts.keys instanceof Function
-      ? opts : new Map(Object.entries(opts));
+    for (let key of keys) {
+      if (!opts[key]) break;
 
-    for await (const key of opts.keys()) {
-      const value = opts.get(key);
-
-      if (this.pathKeys.has(key)) {
-        pathEntries.push(`${value}`);
-      } else {
-        searchEntries.push(`${key}=${value}`);
-      }
+      uri += `/${opts[key]}`;
     }
-    return `/${pathEntries.join('/')}`
-      + `${searchEntries.length ? searchEntries.join('&') : ''}`;
+    return uri ||'/';
   }
 
-  async go({ pathname, search, hash }) {
-    pathname = this.normalizePathname(pathname);
+  async go(strPath) {
+    strPath = this.normalizePathname(strPath);
 
-    if (pathname === location.pathname
-      && search === location.search
-      && hash === location.hash
-    ) return;
+    if (strPath == location.pathname) return;
 
-    history.pushState(null, null, `${pathname}${search}${hash}`);
+    // update the opts here to validate the link and, in the case of the wrong
+    // path, so that the error pops up in the link listener and then there is an
+    // opportunity to process this invalid link
+    this.opts = this.getOpts(strPath);
+
+    history.pushState(null, null, strPath);
     dispatchEvent(new PopStateEvent('popstate'));
   }
 }

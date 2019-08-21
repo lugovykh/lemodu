@@ -2,48 +2,28 @@ const template = document.createElement('template');
 template.innerHTML = `
   <style>
     :host {
-      grid-area: header;
       display: flex;
-      flex-flow: row;
-      background-color: var(--content-bg-color);
-      border-bottom: var(--menu-border);
+      flex-flow: column;
+      margin: 16px auto;
+      padding: 16px;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
     }
-    ::slotted(*) {
-      margin: 0 auto;
+    ::slotted(div) {
+      white-space: pre-wrap;
     }
   </style>
-  <slot name="menu"></slot>
+  <slot name="logo"></slot>
   <slot></slot>
 `;
 
-import '/elements/app-menu/app-menu.js';
-
-class AppHeader extends HTMLElement {
+class AppCard extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({mode: 'open'});
-    this.shadowRoot.append(template.content.cloneNode(true));
-  }
-
-  async connectedCallback() {
-    await this.render();
-  }
-
-  async render() {
-    const menu = document.createElement('app-menu');
-    const pages = ['news', 'users', 'about'];
-
-    for await (const value of pages) {
-      const subMenu = document.createElement('a');
-      subMenu.setAttribute('href', await router.getUri({type: value}))
-      subMenu.append(value);
-
-      menu.append(subMenu);
-    }
-    menu.setAttribute('slot', 'menu');
-    this.append(menu);
+    const shadowRoot = this.attachShadow({mode: 'open'});
+    shadowRoot.append(template.content.cloneNode(true));
   }
 }
 
-customElements.define('app-header', AppHeader);
+customElements.define('app-header', AppCard);
