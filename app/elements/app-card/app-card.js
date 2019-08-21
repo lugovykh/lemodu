@@ -4,31 +4,37 @@ template.innerHTML = `
     :host {
       display: flex;
       flex-flow: column;
-      margin: 16px auto;
-      padding: 16px;
-      min-width: 24em;
-      max-width: 40em;
-      background-color: #FFF;
-      border-radius: 2px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+      box-sizing: border-box;
+      padding: 8px 16px 16px;
+      background-color: var(--content-bg-color);
+      border: var(--content-border);
+      border-top: var(--content-top-border);
+      border-right: var(--content-right-border);
+      border-bottom: var(--content-bottom-border);
+      border-left: var(--content-left-border);
+      border-radius: var(--content-border-radius);
+    }
+    a {
+      font-variant: small-caps;
     }
     ::slotted(h2),
     [name=title]::slotted(*) {
-      margin: 0;
-      font-size: 1.4em;
-      font-weight: normal;
-      color: #000;
+      margin: 0 auto;
+      font-size: 1.5em;
+      font-weight: 600;
+      color: var(--titel-font-color);
+      font-variant: small-caps;
       text-decoration: none;
     }
     ::slotted(span),
     ::slotted(time) {
       font-size: .9em;
-      color: #888;
+      color: var(--additional-font-color);
     }
     ::slotted(p) {
-      margin: 1em 0 0;
+      margin: 16px 0 0;
       text-align: justify;
-      color: #444;
+      color: var(--additional-font-color);
     }
     ::slotted(div) {
       white-space: pre-wrap;
