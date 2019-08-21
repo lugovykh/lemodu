@@ -1,19 +1,25 @@
 export default class DataBase {
-  constructor() {}
+  constructor() {
+  }
 
   async generateUrl(opts) {
     let entries = [];
+    opts = opts.keys instanceof Function
+      ? opts : new Map(Object.entries(opts));
 
-    for (let key of Object.keys(opts)) {
-      let value = opts[key];
+    for (const key of opts.keys()) {
+      const value = opts.get(key);
       entries.push(`${key}=${value}`);
     }
     return `/get?${entries.join('&')}`;
   }
 
   async get(opts) {
-    let response = await fetch(await this.generateUrl(opts));
+    let url = await this.generateUrl(opts);
 
-    return await response.json();
+    let data = await fetch(url);
+    data = await data.json();
+
+    return data;
   }
 }
