@@ -13,8 +13,7 @@
     "url": "https://vk.com/sergey.lugovykh"
   },
   "license": "MIT",
-  "dependencies": {
-    "fastify": "1.x",
-    "fastify-auto-push": "0.x"
+  "devDependencies": {
+    "eslint": "6.x.x"
   }
 }

@@ -1,5 +1,14 @@
 const template = document.createElement('template');
 template.innerHTML = `
+  <style>
+    :host {
+      position: relative;
+      display: grid;
+      grid: [header-start] "header" [header-end]
+        [page-start] "page" [page-end];
+    }
+  </style>
+
   <slot name="header"></slot>
   <slot></slot>
 `;
@@ -10,9 +19,11 @@ import '/elements/app-header/app-header.js';
 import '/elements/app-page/app-page.js';
 
 window.db = new DataBase();
-window.router = new Router('news', 'users');
+window.router = new Router(['news', 'users', 'about']);
 
-class AppBody extends HTMLElement {
+const appName = 'main';
+
+class App extends HTMLElement {
   constructor() {
     super();
 
@@ -29,15 +40,12 @@ class AppBody extends HTMLElement {
   }
 
   async render() {
-    let newPage;
+    const newPage = document.createElement('app-page');
 
-    if (router.history.has(location.pathname)) {
-      newPage = router.history.get(location.pathname);
-      console.log('The page was taken from history.');
-
-    } else {
-      newPage = document.createElement('app-page');
-      console.log('A new page has been created.');
+    if (!this.currentHeader) {
+      const newHeader = document.createElement('app-header');
+      this.append(newHeader);
+      this.currentHeader = newHeader;
     }
 
     if (this.currentPage) {
@@ -45,12 +53,10 @@ class AppBody extends HTMLElement {
     } else {
       this.append(newPage);
     }
-
-    router.history.set(location.pathname, newPage);
     this.currentPage = newPage;
   }
 }
 
-customElements.define('app-body', AppBody);
-const app = document.createElement('app-body');
+customElements.define(`${appName}-app`, App);
+const app = document.createElement(`${appName}-app`);
 document.body.append(app);
