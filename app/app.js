@@ -1,3 +1,8 @@
+import DataBase from '/modules/db.js';
+import Router from '/modules/router.js';
+import '/elements/app-header/app-header.js';
+import '/elements/app-page/app-page.js';
+
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
@@ -13,11 +18,6 @@ template.innerHTML = `
   <slot></slot>
 `;
 
-import DataBase from '/modules/db.js';
-import Router from '/modules/router.js';
-import '/elements/app-header/app-header.js';
-import '/elements/app-page/app-page.js';
-
 window.db = new DataBase();
 window.router = new Router(['news', 'users', 'about']);
 
@@ -27,7 +27,7 @@ class App extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({mode: 'open'});
+    this.attachShadow({ mode: 'open' });
     this.shadowRoot.append(template.content.cloneNode(true));
   }
 

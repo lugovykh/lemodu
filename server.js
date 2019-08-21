@@ -2,7 +2,7 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 
-const staticDir = path.join(__dirname, 'src');
+const staticDir = path.join(__dirname, 'app');
 const dbDir = path.join(__dirname, 'db');
 const hostname = 'localhost';
 const port = 3000;
