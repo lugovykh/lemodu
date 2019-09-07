@@ -1,3 +1,11 @@
+const styleSheet = new CSSStyleSheet();
+styleSheet.replaceSync(`
+a.invalid {
+  text-decoration: line-through !important;
+}
+`);
+document.adoptedStyleSheets = [...document.adoptedStyleSheets, styleSheet];
+
 export default class Router {
   constructor(pages, pathKeys = ['type', 'id']) {
     const startTime = Date.now();
@@ -94,9 +102,7 @@ export default class Router {
     opts = opts.keys instanceof Function
       ? opts : new Map(Object.entries(opts));
 
-    for await (const key of opts.keys()) {
-      const value = opts.get(key);
-
+    for await (const [key, value] of opts) {
       if (this.pathKeys.has(key)) {
         pathEntries.push(`${value}`);
       } else {

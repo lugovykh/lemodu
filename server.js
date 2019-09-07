@@ -7,15 +7,18 @@ const dbDir = path.join(__dirname, 'db');
 const hostname = 'localhost';
 const port = 3000;
 const contentTypes = new Map()
+  .set('htm', 'text/html')
+  .set('html', 'text/html')
   .set('css', 'text/css')
   .set('js', 'application/javascript')
   .set('mjs', 'application/javascript')
   .set('json', 'application/json')
   .set('png', 'image/png')
+  .set('ico', 'image/x-icon')
   .set('svg', 'image/svg+xml');
 
 async function sendFile(source, res) {
-  let file = new fs.ReadStream(source);
+  const file = new fs.ReadStream(source);
   file.pipe(res);
 
   file.on('error', (err) => {
@@ -30,50 +33,50 @@ async function sendFile(source, res) {
 }
 
 async function getOpts(strPath) {
-  let rawOpts = strPath.split('?')[1].split('&');
-  let opts = new Map();
+  const rawOpts = strPath.split('?')[1].split('&');
+  const opts = new Map();
 
-  for await (let entry of rawOpts) {
+  for await (const entry of rawOpts) {
     opts.set(...entry.split('='));
   }
   return opts;
 }
 
 new http.Server(async (req, res) => {
+  let { url } = req;
   let sourceDir = staticDir;
-  let url = req.url;
-  let isToDataBase = /^\/get[\#\?$]/.test(url);
+  let fileExtension = url.match(/(?<=\.)[\w\n]{1,6}$/);
 
-  if (isToDataBase) {
-    let opts = await getOpts(url);
-    sourceDir = dbDir;
-    url = `/${opts.get('type')}/${opts.get('id')}.json`;
+  if (fileExtension) {
+    fileExtension = fileExtension[0];
 
-    if (opts.size === 1) {
-      url = `/${opts.get('type')}.json`;
+  } else {
+    const isDataBaseRequest = /^\/json[#?$]/.test(url);
+
+    if (isDataBaseRequest) {
+      const opts = await getOpts(url);
+      sourceDir = dbDir;
+
+      fileExtension = 'json';
+      url = `/${opts.get('type')}/${opts.get('id')}.${fileExtension}`;
+
+      if (opts.size === 1) {
+        url = `/${opts.get('type')}.${fileExtension}`;
+      }
+
+    } else {
+      const isModule = /^\.?\/modules\//i.test(url);
+
+      fileExtension = isModule ? 'js' : 'html';
+      url = `${isModule ? url : 'index'}.${fileExtension}`;
     }
   }
 
-  let fileExtension = url.match(/(?<=\.)[\w\n]{1,6}$/);
+  res.setHeader('Content-Type', contentTypes.get(fileExtension));
+  res.setHeader('Cache-Control', 'public, max-age=86400');
 
-  fileExtension = fileExtension ? fileExtension[0] : null;
-  res.statusCode = 200;
+  sendFile(path.join(sourceDir, url), res);
 
-  if (fileExtension && contentTypes.has(fileExtension)) {
-    res.setHeader('Content-Type', contentTypes.get(fileExtension));
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-
-    await sendFile(path.join(sourceDir, url), res);
-
-  } else if (/^\.?\/modules\//i.test(url) || /^\.?\/elements\//i.test(url)) {
-    res.setHeader('Content-Type', contentTypes.get('js'));
-    await sendFile(path.join(sourceDir, `${url}.js`), res);
-
-  } else {
-    res.setHeader('Content-Type', 'text/html');
-
-    await sendFile(path.join(sourceDir, 'index.html'), res);
-  }
 }).listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}`);
 });

@@ -1,0 +1,11 @@
+{
+  "type": "news",
+  "title": "Hello 🌍!",
+  "date": "2017-07-08",
+  "author": {
+    "id": 1,
+    "type": "users",
+    "nickname": "admin"
+  },
+  "content": "Hello anyone! It's my second news.\nHello anyone! It's my second news.\nHello anyone! It's my second news."
+}

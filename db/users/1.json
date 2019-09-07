@@ -1,7 +1,8 @@
 {
-  "nickname": "friend",
-  "first-name": "Mikhail",
-  "last-name": null,
+  "type": "users",
+  "nickname": "admin",
+  "first-name": "Sergey",
+  "last-name": "Lugovykh",
   "birthday": null,
-  "about": "Admin's best friend."
+  "about": "The one who created it."
 }

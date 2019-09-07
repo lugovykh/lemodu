@@ -1,42 +1,48 @@
+import '/modules/app-menu/app-menu.js';
+
+const styleSheet = new CSSStyleSheet();
+const CSS = `
+  :host {
+    grid-area: header;
+    display: flex;
+    flex-flow: row;
+    background-color: var(--content-bg-color);
+    border-bottom: var(--menu-border);
+  }
+  ::slotted(*) {
+    margin: 0 auto;
+  }
+`;
 const template = document.createElement('template');
 template.innerHTML = `
-  <style>
-    :host {
-      grid-area: header;
-      display: flex;
-      flex-flow: row;
-      background-color: var(--content-bg-color);
-      border-bottom: var(--menu-border);
-    }
-    ::slotted(*) {
-      margin: 0 auto;
-    }
-  </style>
   <slot name="menu"></slot>
   <slot></slot>
 `;
 
-import '/elements/app-menu/app-menu.js';
-
-class AppHeader extends HTMLElement {
+export default class AppHeader extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({mode: 'open'});
+    this.attachShadow({ mode: 'open' });
+    this.shadowRoot.adoptedStyleSheets = [styleSheet];
     this.shadowRoot.append(template.content.cloneNode(true));
   }
 
   async connectedCallback() {
-    await this.render();
+    this.render();
   }
 
   async render() {
     const menu = document.createElement('app-menu');
     const pages = ['news', 'users', 'about'];
 
+    if (styleSheet.cssRules.length == 0) {
+      styleSheet.replaceSync(CSS);
+    }
+
     for await (const value of pages) {
       const subMenu = document.createElement('a');
-      subMenu.setAttribute('href', await router.getUri({type: value}))
+      subMenu.setAttribute('href', `/?type=${value}`);
       subMenu.append(value);
 
       menu.append(subMenu);

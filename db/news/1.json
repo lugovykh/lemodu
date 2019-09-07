@@ -1,9 +1,11 @@
 {
-  "title": "Hello 🌍!",
-  "date": "2017-07-08",
+  "type": "news",
+  "title": "Hello World!",
+  "date": "2017-07-07",
   "author": {
-    "id": 0,
+    "id": 1,
+    "type": "users",
     "nickname": "admin"
   },
-  "content": "Hello anyone! It's my second news.\nHello anyone! It's my second news.\nHello anyone! It's my second news."
+  "content": "Hello everyone! It's my first news.\nHello everyone! It's my first news.\nHello everyone! It's my first news."
 }

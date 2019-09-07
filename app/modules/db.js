@@ -11,7 +11,7 @@ export default class DataBase {
       const value = opts.get(key);
       entries.push(`${key}=${value}`);
     }
-    return `/get?${entries.join('&')}`;
+    return `/json?${entries.join('&')}`;
   }
 
   async get(opts) {

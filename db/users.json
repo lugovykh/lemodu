@@ -1,12 +1,14 @@
 {
-  "0": {
+  "1": {
+    "type": "users",
     "nickname": "admin",
     "first-name": "Sergey",
     "last-name": "Lugovykh",
     "birthday": null,
     "about": "The one who created it."
   },
-  "1": {
+  "2": {
+    "type": "users",
     "nickname": "friend",
     "first-name": "Mikhail",
     "last-name": null,

@@ -7,15 +7,15 @@ class AppPage extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({mode: 'open'});
+    this.attachShadow({ mode: 'open' });
     this.shadowRoot.append(template.content.cloneNode(true));
   }
 
   async connectedCallback() {
-    await this.render();
+    this.render();
 
     addEventListener('popstate', async e => {
-      await this.render();
+      this.render();
     });
   }
 
