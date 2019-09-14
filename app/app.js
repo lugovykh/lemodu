@@ -68,43 +68,41 @@ class App extends HTMLElement {
   }
 
   async render() {
+    if (styleSheet.cssRules.length == 0) {
+      styleSheet.replaceSync(CSS);
+    }
+
     let opts = await router.getOpts();
     if (!opts.size) opts.set('type', 'news');
-    const content = await db.get(opts);
+    const data = await db.get(opts);
     const type = opts.get('type');
     const id = opts.get('id');
 
     const newPage = document.createElement('app-page');
-    const visibleFields = {};
+    const fields = {};
 
-    visibleFields.news = new Map()
-      .set('title', { tag: 'a' })
-      .set('date', { tag: 'time' })
-      .set('author', { tag: 'a' })
-      .set('content', {});
+    fields.news = {
+      'title': 'title',
+      'top-bar': ['date', 'author'],
+      'content': 'content'
+    };
+    fields.users = {
+      'title': 'nickname',
+      'top-bar': ['first-name', 'last-name', 'birthday'],
+      'content': 'about'
+    };
 
-    visibleFields.users = new Map()
-      .set('nickname', { tag: 'a' })
-      .set('first-name', { tag: 'span' })
-      .set('last-name', { tag: 'span' })
-      .set('birthday', { tag: 'time' })
-      .set('about', {});
-
-    const fields = visibleFields[type];
+    const visibleFields = fields[type];
 
     if (id) {
       newPage.classList.add('item');
-      newPage.append(await this.createCard(content, { type, id, fields }));
+      newPage.append(await this.createCard(data, { type, id, visibleFields }));
 
     } else {
-      for await (const id of Object.keys(content)) {
-        const entry = content[id];
-        newPage.append(await this.createCard(entry, { type, id, fields }));
+      for await (const id of Object.keys(data)) {
+        const entry = data[id];
+        newPage.append(await this.createCard(entry, { type, id, visibleFields }));
       }
-    }
-
-    if (styleSheet.cssRules.length == 0) {
-      styleSheet.replaceSync(CSS);
     }
 
     if (!this.currentHeader) {
@@ -122,20 +120,16 @@ class App extends HTMLElement {
   }
 
   async createCard(entry, opts) {
+    const { type, id, visibleFields } = opts;
     const card = document.createElement('app-card');
-    const { fields } = opts;
 
-    for await (const [key, value] of Object.entries(entry)) {
-      if (!fields.has(key) || value === null) continue;
-
-      const title = fields.keys().next().value;
-      let element;
+    const createField = async (key, value, slot) => {
+      let field;
       let content;
       let wrapperTag;
       let uriOpts;
 
-      if (key == title) {
-        const { type, id } = opts;
+      if (slot == 'title') {
         wrapperTag = 'h2';
         uriOpts = { type, id };
 
@@ -145,26 +139,39 @@ class App extends HTMLElement {
       }
 
       if (uriOpts) {
-        element = document.createElement('a');
-        element.setAttribute('href', await router.getUri(uriOpts));
-        content = document.createElement(wrapperTag || 'div');
+        content = document.createElement('a');
+        content.setAttribute('href', await router.getUri(uriOpts));
+        field = document.createElement(wrapperTag || 'div');
+
       } else if (key == 'date') {
-        element = document.createElement('time');
-        element.setAttribute('datetime', value);
-      } else {
-        element = document.createElement('div');
-      }
-      if (content) {
-        content.append(element);
-      } else {
-        content = element;
-      }
+        content = document.createElement('time');
+        content.setAttribute('datetime', value);
 
-      element.append(value.nickname || value);
-      content.setAttribute('slot', key);
-      card.append(content);
+      } else {
+        content = document.createElement('div');
+      }
+      if (field) {
+        field.append(content);
+      } else {
+        field = content;
+      }
+      content.append(value.nickname || value);
+      field.setAttribute('slot', slot);
+
+      return field;
+    };
+
+    for await (const [slot, fields] of Object.entries(visibleFields)) {
+      const fieldList = (fields instanceof Array) ? fields : [fields];
+
+      for (const key of fieldList) {
+        const value = entry[key];
+        if (value === null) continue;
+
+        const field = await createField(key, value, slot);
+        card.append(field);
+      }
     }
-
     return card;
   }
 }

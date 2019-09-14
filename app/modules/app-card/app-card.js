@@ -29,8 +29,7 @@ const CSS = `
     color: var(--additional-font-color);
   }
   ::slotted(p),
-  ::slotted([slot="content"]),
-  ::slotted([slot="about"]) {
+  ::slotted([slot="content"]) {
     margin: 16px 0 0;
     font-size: 1em;
     white-space: pre-wrap;
@@ -40,20 +39,10 @@ const CSS = `
 `;
 const template = document.createElement('template');
 template.innerHTML = `
-  <!-- article -->
   <slot name="title"></slot>
-  <slot name="date"></slot>
-  <slot name="author"></slot>
+  <slot name="top-bar"></slot>
+  <slot name="bottom-bar"></slot>
   <slot name="content"></slot>
-  <!-- user -->
-  <slot name="nickname"></slot>
-  <slot name="full-name">
-    <slot name="first-name"></slot>
-    <slot name="last-name"></slot>
-  </slot>
-  <slot name="birthday"></slot>
-  <slot name="about"></slot>
-  <slot></slot>
 `;
 
 class AppCard extends HTMLElement {

@@ -34,12 +34,12 @@ export default class Router {
         // URI, so that the error pops up in the link listener and then there
         // is an opportunity to process this invalid link
         await this.getOpts(e.target);
-        await this.go(e.target);
 
       } catch (err) {
         e.target.classList.add('invalid');
         throw err;
       }
+      this.go(e.target);
     });
 
     console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`);
