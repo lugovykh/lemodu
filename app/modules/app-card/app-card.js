@@ -1,4 +1,3 @@
-import './app-card-title.js'
 import './app-card-meta.js'
 
 const styleSheet = new CSSStyleSheet()
