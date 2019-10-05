@@ -1,10 +1,17 @@
-const styleSheet = new CSSStyleSheet();
+import './app-card-title.js'
+import './app-card-meta.js'
+
+const styleSheet = new CSSStyleSheet()
 const CSS = `
   :host {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-flow: column;
     box-sizing: border-box;
-    padding: 8px 16px 16px;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--content-font-color);
     background-color: var(--content-bg-color);
     border: var(--content-border);
     border-top: var(--content-top-border);
@@ -13,56 +20,63 @@ const CSS = `
     border-left: var(--content-left-border);
     border-radius: var(--content-border-radius);
   }
-  ::slotted(h2) {
-    margin: 0 auto;
-    font-size: 1.5em;
-    font-weight: 600;
-    color: var(--titel-font-color);
-    font-variant: small-caps;
+  ::slotted(*) {
+    margin: 0 0 16px;
+  }
+  a#title {
+    max-width: 100%;
+    align-self: center;
     text-decoration: none;
   }
-  ::slotted(a),
-  ::slotted(div),
-  ::slotted(span),
-  ::slotted(time) {
-    font-size: .9em;
-    color: var(--additional-font-color);
+  ::slotted(h2) {
+    overflow: hidden;
+    font-size: 1.2em;
+    font-weight: 600;
+    font-variant: small-caps;
+    color: var(--titel-font-color);
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
-  ::slotted(p),
-  ::slotted([slot="content"]) {
-    margin: 16px 0 0;
+  ::slotted(p) {
+    margin: 0 0 1em;
     font-size: 1em;
     white-space: pre-wrap;
     text-align: justify;
-    color: var(----content-font-color);
   }
-`;
-const template = document.createElement('template');
+  slot[name$="-bar"] {
+    display: flex;
+    flex-flow: row wrap;
+  }
+`
+const template = document.createElement('template')
 template.innerHTML = `
-  <slot name="title"></slot>
+  <a id="title"><slot name="title"></slot></a>
   <slot name="top-bar"></slot>
-  <slot name="bottom-bar"></slot>
-  <slot name="content"></slot>
-`;
+  <slot></slot>
+`
 
 class AppCard extends HTMLElement {
-  constructor() {
-    super();
+  constructor () {
+    super()
 
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.adoptedStyleSheets = [styleSheet];
-    this.shadowRoot.append(template.content.cloneNode(true));
+    this.attachShadow({ mode: 'open' })
+    this.shadowRoot.adoptedStyleSheets = [styleSheet]
+    this.shadowRoot.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback() {
-    this.render();
-  }
-
-  async render() {
-    if (styleSheet.cssRules.length == 0) {
-      styleSheet.replaceSync(CSS);
+  async connectedCallback () {
+    if (styleSheet.cssRules.length === 0) {
+      styleSheet.replaceSync(CSS)
     }
+
+    this.render()
+  }
+
+  async render () {
+    this.shadowRoot.querySelector('#title').setAttribute(
+      'href', this.dataset.href
+    )
   }
 }
 
-customElements.define('app-card', AppCard);
+customElements.define('app-card', AppCard)

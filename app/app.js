@@ -1,10 +1,10 @@
-import DataBase from '/modules/db';
-import Router from '/modules/router';
-import '/modules/app-header/app-header';
-import '/modules/app-page/app-page';
-import '/modules/app-card/app-card';
+import DataBase from './modules/db'
+import Router from './modules/router'
+import './modules/app-header/app-header'
+import './modules/app-page/app-page'
+import './modules/app-card/app-card'
 
-const mainStyleSheet = new CSSStyleSheet();
+const mainStyleSheet = new CSSStyleSheet()
 mainStyleSheet.replaceSync(`
   html, body {
     overflow: hidden;
@@ -18,15 +18,15 @@ mainStyleSheet.replaceSync(`
   }
   a {
     color: inherit;
-    text-decoration: inherit;
+    text-decoration: none;
   }
-  a:hover {
-    text-decoration: underline;
+  a.invalid {
+    text-decoration: line-through !important;
   }
-`);
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, mainStyleSheet];
+  `)
+document.adoptedStyleSheets = [mainStyleSheet]
 
-const styleSheet = new CSSStyleSheet();
+const styleSheet = new CSSStyleSheet()
 const CSS = `
   :host {
     position: relative;
@@ -34,148 +34,137 @@ const CSS = `
     grid: [header-start] "header" [header-end]
       [page-start] "page" [page-end];
   }
-`;
-const template = document.createElement('template');
+`
+const template = document.createElement('template')
 template.innerHTML = `
   <slot name="header"></slot>
   <slot></slot>
-`;
+`
 
-const appName = 'main';
+const appName = 'main'
 
-const db = new DataBase();
-const router = new Router(['news', 'users', 'about']);
+const db = new DataBase()
+const router = new Router(['news', 'users', 'about'])
 
 class App extends HTMLElement {
-  constructor() {
-    super();
+  constructor () {
+    super()
 
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.adoptedStyleSheets = [styleSheet];
-    this.shadowRoot.append(template.content.cloneNode(true));
+    this.attachShadow({ mode: 'open' })
+    this.shadowRoot.adoptedStyleSheets = [styleSheet]
+    this.shadowRoot.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback() {
-    const startTime = Date.now();
-    await this.render();
-    console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`);
+  async connectedCallback () {
+    if (styleSheet.cssRules.length === 0) {
+      styleSheet.replaceSync(CSS)
+    }
+
+    const startTime = Date.now()
+    await this.render()
+    console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`)
 
     addEventListener('popstate', async () => {
-      const startTime = Date.now();
-      await this.render();
-      console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`);
-    });
+      const startTime = Date.now()
+      await this.render()
+      console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`)
+    })
   }
 
-  async render() {
-    if (styleSheet.cssRules.length == 0) {
-      styleSheet.replaceSync(CSS);
+  async render () {
+    const params = await router.getParams()
+    if (!params.size) params.set('type', 'news')
+    const data = await db.get(params)
+    const type = params.get('type')
+    const id = params.get('id')
+    const newPage = document.createElement('app-page')
+    const cardStructures = {}
+
+    cardStructures.news = {
+      title: 'title',
+      content: 'content',
+      'top-bar': ['publication_date', 'author']
     }
-
-    let opts = await router.getOpts();
-    if (!opts.size) opts.set('type', 'news');
-    const data = await db.get(opts);
-    const type = opts.get('type');
-    const id = opts.get('id');
-
-    const newPage = document.createElement('app-page');
-    const fields = {};
-
-    fields.news = {
-      'title': 'title',
-      'top-bar': ['date', 'author'],
-      'content': 'content'
-    };
-    fields.users = {
-      'title': 'nickname',
-      'top-bar': ['first-name', 'last-name', 'birthday'],
-      'content': 'about'
-    };
-
-    const visibleFields = fields[type];
+    cardStructures.users = {
+      title: 'nickname',
+      content: 'about',
+      'top-bar': ['first_name', 'last_name', 'birth_date']
+    }
 
     if (id) {
-      newPage.classList.add('item');
-      newPage.append(await this.createCard(data, { type, id, visibleFields }));
-
+      newPage.classList.add('item')
+      newPage.append(await this.createCard(data, { type, id, cardStructures }))
     } else {
-      for await (const id of Object.keys(data)) {
-        const entry = data[id];
-        newPage.append(await this.createCard(entry, { type, id, visibleFields }));
+      for await (const [id, entry] of Object.entries(data)) {
+        newPage.append(await this.createCard(entry, { type, id, cardStructures }))
       }
     }
-
     if (!this.currentHeader) {
-      const newHeader = document.createElement('app-header');
-      this.append(newHeader);
-      this.currentHeader = newHeader;
+      const newHeader = document.createElement('app-header')
+      this.append(newHeader)
+      this.currentHeader = newHeader
     }
-
     if (this.currentPage) {
-      this.currentPage.replaceWith(newPage);
+      this.currentPage.replaceWith(newPage)
     } else {
-      this.append(newPage);
+      this.append(newPage)
     }
-    this.currentPage = newPage;
+    this.currentPage = newPage
   }
 
-  async createCard(entry, opts) {
-    const { type, id, visibleFields } = opts;
-    const card = document.createElement('app-card');
+  async createCard (entry, { type, id, cardStructures }) {
+    const card = document.createElement('app-card')
+    const href = await router.getUri({ type, id })
+    card.setAttribute('data-href', href)
 
-    const createField = async (key, value, slot) => {
-      let field;
-      let content;
-      let wrapperTag;
-      let uriOpts;
+    const createMeta = async (key, value) => {
+      const meta = document.createElement('app-card-meta')
+      let content = value
 
-      if (slot == 'title') {
-        wrapperTag = 'h2';
-        uriOpts = { type, id };
-
-      } else if (value.type && value.id) {
-        const { type, id } = value;
-        uriOpts = { type, id };
+      if (value.type) {
+        const { type, id } = value
+        const { title } = cardStructures[type]
+        content = document.createElement('a')
+        content.setAttribute('href', await router.getUri({ type, id }))
+        content.append(value[title])
+      } else if (/_date$/.test(key)) {
+        const date = new Date(value)
+        content = document.createElement('time')
+        content.setAttribute('datetime', value)
+        if (value.length <= 10) {
+          content.append(date.toLocaleDateString())
+        } else {
+          content.append(date.toLocaleString())
+        }
       }
+      meta.dataset.label = key
+      meta.append(content)
+      return meta
+    }
 
-      if (uriOpts) {
-        content = document.createElement('a');
-        content.setAttribute('href', await router.getUri(uriOpts));
-        field = document.createElement(wrapperTag || 'div');
-
-      } else if (key == 'date') {
-        content = document.createElement('time');
-        content.setAttribute('datetime', value);
-
+    for await (const [slot, key] of Object.entries(cardStructures[type])) {
+      if (slot === 'title') {
+        const title = document.createElement('h2')
+        title.setAttribute('slot', slot)
+        title.append(entry[key])
+        card.append(title)
+      } else if (slot === 'content') {
+        card.append(entry[key])
       } else {
-        content = document.createElement('div');
-      }
-      if (field) {
-        field.append(content);
-      } else {
-        field = content;
-      }
-      content.append(value.nickname || value);
-      field.setAttribute('slot', slot);
-
-      return field;
-    };
-
-    for await (const [slot, fields] of Object.entries(visibleFields)) {
-      const fieldList = (fields instanceof Array) ? fields : [fields];
-
-      for (const key of fieldList) {
-        const value = entry[key];
-        if (value === null) continue;
-
-        const field = await createField(key, value, slot);
-        card.append(field);
+        const keys = key
+        for (const key of keys) {
+          const value = entry[key]
+          if (value == null) continue
+          const meta = await createMeta(key, value)
+          meta.setAttribute('slot', slot)
+          card.append(meta)
+        }
       }
     }
-    return card;
+    return card
   }
 }
 
-customElements.define(`${appName}-app`, App);
-const app = document.createElement(`${appName}-app`);
-document.body.append(app);
+customElements.define(`${appName}-app`, App)
+const app = document.createElement(`${appName}-app`)
+document.body.append(app)

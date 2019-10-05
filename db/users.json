@@ -2,17 +2,17 @@
   "1": {
     "type": "users",
     "nickname": "admin",
-    "first-name": "Sergey",
-    "last-name": "Lugovykh",
-    "birthday": null,
+    "first_name": "Sergey",
+    "last_name": "Lugovykh",
+    "birth_date": "1991-05-12",
     "about": "The one who created it."
   },
   "2": {
     "type": "users",
     "nickname": "friend",
-    "first-name": "Mikhail",
-    "last-name": null,
-    "birthday": null,
+    "first_name": "Mikhail",
+    "last_name": "P.",
+    "birth_date": null,
     "about": "Admin's best friend."
   }
 }

@@ -3,15 +3,15 @@
     --main-bg-color: #dfdfdf;
 
     --menu-font-color: #1f1f1f;
-    --menu-border: 1px solid var(--additional-font-color);
+    --menu-border: 2px solid var(--additional-font-color);
 
-    --titel-font-color: #1f1f1f;
+    --titel-font-color: #0f0f0f;
     --additional-font-color: #6f6f6f;
 
     --content-font-color: #2f2f2f;
     --content-bg-color: #fff;
-    --content-border: 1px solid var(--additional-font-color);
-    --content-top-border: 8px solid var(--additional-font-color);
+    --content-border: 2px solid var(--additional-font-color);
+    --content-top-border: var(--content-border);
     --content-right-border: var(--content-border);
     --content-bottom-border: var(--content-border);
     --content-left-border: var(--content-border);

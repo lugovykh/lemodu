@@ -32,13 +32,14 @@ class AppPage extends HTMLElement {
   }
 
   async connectedCallback() {
+    if (styleSheet.cssRules.length == 0) {
+      styleSheet.replaceSync(CSS);
+    }
+
     this.render();
   }
 
   async render() {
-    if (styleSheet.cssRules.length == 0) {
-      styleSheet.replaceSync(CSS);
-    }
   }
 }
 

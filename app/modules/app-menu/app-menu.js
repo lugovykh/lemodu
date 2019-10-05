@@ -3,20 +3,20 @@ const CSS = `
   :host {
     display: grid;
     grid: none / auto-flow;
-    line-height: 1;
+    font-size: 1.2em;
+    line-height: 1.2;
     font-weight: 600;
     color: var(--menu-font-color);
-    text-transform: uppercase;
-    text-decoration: none;
+    font-variant: small-caps;
   }
   ::slotted(*) {
     overflow: hidden;
     white-space: nowrap;
-    padding: 16px;
+    padding: 8px 16px;
   }
   ::slotted(a) {
     color: var(--menu-font-color);
-    text-decoration: none !important;
+    text-decoration: none;
   }
 `;
 const template = document.createElement('template');
@@ -34,13 +34,14 @@ class AppMenu extends HTMLElement {
   }
 
   async connectedCallback() {
+    if (styleSheet.cssRules.length == 0) {
+      styleSheet.replaceSync(CSS);
+    }
+
     this.render();
   }
 
   async render() {
-    if (styleSheet.cssRules.length == 0) {
-      styleSheet.replaceSync(CSS);
-    }
   }
 }
 

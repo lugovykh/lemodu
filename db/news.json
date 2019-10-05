@@ -2,7 +2,7 @@
   "1": {
     "type": "news",
     "title": "Hello World!",
-    "date": "2017-07-07",
+    "publication_date": "2017-07-07T07:07:07.000Z",
     "author": {
       "id": 1,
       "type": "users",
@@ -13,7 +13,7 @@
   "2": {
     "type": "news",
     "title": "Hello 🌍!",
-    "date": "2017-07-08",
+    "publication_date": "2017-07-07T08:08:08.000Z",
     "author": {
       "id": 1,
       "type": "users",

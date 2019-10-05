@@ -14,7 +14,7 @@ class AppPage extends HTMLElement {
   async connectedCallback() {
     this.render();
 
-    addEventListener('popstate', async e => {
+    addEventListener('popstate', async () => {
       this.render();
     });
   }

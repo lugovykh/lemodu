@@ -29,6 +29,10 @@ export default class AppHeader extends HTMLElement {
   }
 
   async connectedCallback() {
+    if (styleSheet.cssRules.length == 0) {
+      styleSheet.replaceSync(CSS);
+    }
+
     this.render();
   }
 
@@ -36,13 +40,9 @@ export default class AppHeader extends HTMLElement {
     const menu = document.createElement('app-menu');
     const pages = ['news', 'users', 'about'];
 
-    if (styleSheet.cssRules.length == 0) {
-      styleSheet.replaceSync(CSS);
-    }
-
     for await (const value of pages) {
       const subMenu = document.createElement('a');
-      subMenu.setAttribute('href', `/?type=${value}`);
+      subMenu.setAttribute('href', `/${value}`);
       subMenu.append(value);
 
       menu.append(subMenu);
