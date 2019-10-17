@@ -1,4 +1,4 @@
-import './app-card-meta.js'
+import './app-card-meta'
 
 const styleSheet = new CSSStyleSheet()
 const CSS = `

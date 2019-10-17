@@ -73,24 +73,30 @@ class App extends HTMLElement {
 
   async render () {
     const params = await router.getParams()
-    if (!params.size) params.set('type', 'news')
+    if (params.size === 0) {
+      params.set('type', 'news')
+    }
     const data = await db.get(params)
     const type = params.get('type')
     const id = params.get('id')
     const newPage = document.createElement('app-page')
-    const cardStructures = {}
-
-    cardStructures.news = {
-      title: 'title',
-      content: 'content',
-      'top-bar': ['publication_date', 'author']
+    const cardStructures = {
+      news: {
+        title: 'title',
+        content: 'content',
+        'top-bar': ['publication_date', 'author']
+      },
+      users: {
+        title: 'nickname',
+        content: 'about',
+        'top-bar': ['first_name', 'last_name', 'birth_date']
+      }
     }
-    cardStructures.users = {
-      title: 'nickname',
-      content: 'about',
-      'top-bar': ['first_name', 'last_name', 'birth_date']
-    }
 
+    if (this.header == null) {
+      this.header = document.createElement('app-header')
+      this.append(this.header)
+    }
     if (id) {
       newPage.classList.add('item')
       newPage.append(await this.createCard(data, { type, id, cardStructures }))
@@ -99,23 +105,17 @@ class App extends HTMLElement {
         newPage.append(await this.createCard(entry, { type, id, cardStructures }))
       }
     }
-    if (!this.currentHeader) {
-      const newHeader = document.createElement('app-header')
-      this.append(newHeader)
-      this.currentHeader = newHeader
-    }
-    if (this.currentPage) {
-      this.currentPage.replaceWith(newPage)
-    } else {
+    if (this.page == null) {
       this.append(newPage)
+    } else {
+      this.page.replaceWith(newPage)
     }
-    this.currentPage = newPage
+    this.page = newPage
   }
 
   async createCard (entry, { type, id, cardStructures }) {
     const card = document.createElement('app-card')
-    const href = await router.getUri({ type, id })
-    card.setAttribute('data-href', href)
+    card.dataset.href = await router.getUri({ type, id })
 
     const createMeta = async (key, value) => {
       const meta = document.createElement('app-card-meta')
@@ -152,7 +152,7 @@ class App extends HTMLElement {
         card.append(entry[key])
       } else {
         const keys = key
-        for (const key of keys) {
+        for await (const key of keys) {
           const value = entry[key]
           if (value == null) continue
           const meta = await createMeta(key, value)

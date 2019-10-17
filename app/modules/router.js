@@ -10,26 +10,28 @@ export default class Router {
     this._params = new Map() // cache
 
     addEventListener('click', async e => {
-      if (e.target.tagName !== 'A' ||
-        e.target.href === undefined ||
+      const link = e.path.find(element => {
+        return element.tagName === 'A' && element.href != null
+      })
+
+      if (link == null ||
         e.altKey ||
         e.ctrlKey ||
         e.shiftKey
       ) return
       e.preventDefault()
-
-      if (e.target.classList.contains('invalid')) return
+      if (link.classList.contains('invalid')) return
 
       try {
         // get the params here to validate the link and, in the case of the wrong
         // URI, so that the error pops up in the link listener and then there
         // is an opportunity to process this invalid link
-        await this.getParams(e.target)
+        await this.getParams(link)
       } catch (err) {
-        e.target.classList.add('invalid')
+        link.classList.add('invalid')
         throw err
       }
-      this.go(e.target)
+      this.go(link)
     })
 
     console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`)
