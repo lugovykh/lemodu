@@ -1,26 +1,26 @@
-const template = document.createElement('template');
+const template = document.createElement('template')
 template.innerHTML = `
   <slot></slot>
-`;
+`
 
 class AppPage extends HTMLElement {
-  constructor() {
-    super();
+  constructor () {
+    super()
 
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.append(template.content.cloneNode(true));
+    this.attachShadow({ mode: 'open' })
+    this.shadowRoot.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback() {
-    this.render();
+  async connectedCallback () {
+    this.render()
 
     addEventListener('popstate', async () => {
-      this.render();
-    });
+      this.render()
+    })
   }
 
-  async render() {
+  async render () {
   }
 }
 
-customElements.define('app-page', AppPage);
+customElements.define('app-page', AppPage)

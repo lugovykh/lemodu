@@ -1,4 +1,4 @@
-const styleSheet = new CSSStyleSheet();
+const styleSheet = new CSSStyleSheet()
 const CSS = `
   :host {
     display: grid;
@@ -17,31 +17,31 @@ const CSS = `
     color: var(--menu-font-color);
     text-decoration: none;
   }
-`;
-const template = document.createElement('template');
+`
+const template = document.createElement('template')
 template.innerHTML = `
   <slot></slot>
-`;
+`
 
 class AppMenu extends HTMLElement {
-  constructor() {
-    super();
+  constructor () {
+    super()
 
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.adoptedStyleSheets = [styleSheet];
-    this.shadowRoot.append(template.content.cloneNode(true));
+    this.attachShadow({ mode: 'open' })
+    this.shadowRoot.adoptedStyleSheets = [styleSheet]
+    this.shadowRoot.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback() {
-    if (styleSheet.cssRules.length == 0) {
-      styleSheet.replaceSync(CSS);
+  async connectedCallback () {
+    if (styleSheet.cssRules.length === 0) {
+      styleSheet.replaceSync(CSS)
     }
 
-    this.render();
+    this.render()
   }
 
-  async render() {
+  async render () {
   }
 }
 
-customElements.define('app-menu', AppMenu);
+customElements.define('app-menu', AppMenu)

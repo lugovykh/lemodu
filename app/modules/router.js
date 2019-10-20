@@ -13,7 +13,6 @@ export default class Router {
       const link = e.path.find(element => {
         return element.tagName === 'A' && element.href
       })
-      console.log(link.href)
 
       if (link == null ||
         e.altKey ||
