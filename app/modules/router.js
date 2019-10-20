@@ -11,8 +11,9 @@ export default class Router {
 
     addEventListener('click', async e => {
       const link = e.path.find(element => {
-        return element.tagName === 'A' && element.href != null
+        return element.tagName === 'A' && element.href
       })
+      console.log(link.href)
 
       if (link == null ||
         e.altKey ||

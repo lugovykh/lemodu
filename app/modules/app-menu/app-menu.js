@@ -3,7 +3,6 @@ const CSS = `
   :host {
     display: grid;
     grid: none / auto-flow;
-    font-size: 1.2em;
     line-height: 1.2;
     font-weight: 600;
     color: var(--menu-font-color);
