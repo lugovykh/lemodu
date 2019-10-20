@@ -20,9 +20,6 @@ mainStyleSheet.replaceSync(`
     color: inherit;
     text-decoration: none;
   }
-  a.invalid {
-    text-decoration: line-through !important;
-  }
   `)
 document.adoptedStyleSheets = [mainStyleSheet]
 

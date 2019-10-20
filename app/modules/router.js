@@ -10,27 +10,13 @@ export default class Router {
     this._params = new Map() // cache
 
     addEventListener('click', async e => {
+      if (e.altKey || e.ctrlKey || e.shiftKey) return
       const link = e.path.find(element => {
         return element.tagName === 'A' && element.href
       })
-
-      if (link == null ||
-        e.altKey ||
-        e.ctrlKey ||
-        e.shiftKey
-      ) return
+      if (link == null) return
       e.preventDefault()
-      if (link.classList.contains('invalid')) return
 
-      try {
-        // get the params here to validate the link and, in the case of the wrong
-        // URI, so that the error pops up in the link listener and then there
-        // is an opportunity to process this invalid link
-        await this.getParams(link)
-      } catch (err) {
-        link.classList.add('invalid')
-        throw err
-      }
       this.go(link)
     })
 
