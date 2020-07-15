@@ -1,8 +1,8 @@
 import DataBase from './modules/db'
 import Router from './modules/router'
-import './modules/app-header/app-header'
-import './modules/app-page/app-page'
-import './modules/app-card/app-card'
+import './modules/app-header'
+import './modules/app-page'
+import './modules/app-card'
 
 const mainStyleSheet = new CSSStyleSheet()
 mainStyleSheet.replaceSync(`
@@ -57,18 +57,14 @@ class App extends HTMLElement {
       styleSheet.replaceSync(CSS)
     }
 
-    const startTime = Date.now()
-    await this.render()
-    console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`)
-
+    this.render()
     addEventListener('popstate', async () => {
-      const startTime = Date.now()
-      await this.render()
-      console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`)
+      this.render()
     })
   }
 
   async render () {
+    const startTime = Date.now()
     const params = await router.getParams()
     if (params.size === 0) {
       params.set('type', 'news')
@@ -107,7 +103,10 @@ class App extends HTMLElement {
     } else {
       this.page.replaceWith(newPage)
     }
+    document.title = `${type} — ${appName}`
+    sessionStorage.setItem('pageTitle', document.title)
     this.page = newPage
+    console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`)
   }
 
   async createCard (entry, { type, id, cardStructures }) {

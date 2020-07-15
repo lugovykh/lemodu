@@ -1,4 +1,6 @@
 export default class Router {
+  #params = new Map() // cache
+
   constructor (pages, pathKeys = ['type', 'id']) {
     const startTime = Date.now()
     history.replaceState(null, null,
@@ -7,12 +9,11 @@ export default class Router {
 
     this.pages = new Set(pages)
     this.pathKeys = new Set(pathKeys)
-    this._params = new Map() // cache
 
     addEventListener('click', async e => {
       if (e.altKey || e.ctrlKey || e.shiftKey) return
-      const link = e.path.find(element => {
-        return element.tagName === 'A' && element.href
+      const link = e.path.find(target => {
+        return target.tagName === 'A' && target.href
       })
       if (link == null) return
       e.preventDefault()
@@ -32,8 +33,8 @@ export default class Router {
 
   async getParams ({ pathname, search } = location) {
     const url = `${pathname}${search}`
-    if (this._params.has(url)) {
-      return this._params.get(url)
+    if (this.#params.has(url)) {
+      return this.#params.get(url)
     }
 
     const params = new Map()
@@ -66,8 +67,8 @@ export default class Router {
       throw new URIError(`Invalid URI: ${url}`)
     }
 
-    this._params.clear()
-    this._params.set(url, params)
+    this.#params.clear()
+    this.#params.set(url, params)
     return params
   }
 

@@ -43,32 +43,39 @@ async function getOpts (strPath) {
 }
 
 new http.Server(async (req, res) => {
-  let { url } = req
+  const { url } = req
+  let filePath = url
+  let fileExtension = url.match(/(?<=\.)[\w\n]{1,6}$/)?.[0]
   let sourceDir = staticDir
-  let fileExtension = url.match(/(?<=\.)[\w\n]{1,6}$/)
+  let maxAge = 31536000
 
-  if (fileExtension) {
-    fileExtension = fileExtension[0]
-  } else {
+  if (!fileExtension) {
     const isDataBaseRequest = /^\/json[#?$]/.test(url)
     if (isDataBaseRequest) {
       const opts = await getOpts(url)
       sourceDir = dbDir
       fileExtension = 'json'
-      url = `/${opts.get('type')}/${opts.get('id')}.${fileExtension}`
       if (opts.size === 1) {
-        url = `/${opts.get('type')}.${fileExtension}`
+        filePath = `/${opts.get('type')}.${fileExtension}`
+      } else {
+        filePath = `/${opts.get('type')}/${opts.get('id')}.${fileExtension}`
       }
     } else {
       const isModule = /^\.?\/modules\//i.test(url)
-      fileExtension = isModule ? 'js' : 'html'
-      url = `${isModule ? url : 'index'}.${fileExtension}`
+      if (isModule) {
+        fileExtension = 'js'
+      } else {
+        fileExtension = 'html'
+        maxAge = 0
+      }
+      filePath = `${isModule ? url : 'index'}.${fileExtension}`
     }
   }
   res.setHeader('Content-Type', contentTypes.get(fileExtension))
-  res.setHeader('Cache-Control', 'public, max-age=86400')
+  res.setHeader('Cache-Control', `public, max-age=${maxAge}${maxAge ? ', immutable' : ''}`)
 
-  sendFile(path.join(sourceDir, url), res)
+  console.log(filePath)
+  sendFile(path.join(sourceDir, filePath), res)
 }).listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}`)
 })

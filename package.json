@@ -9,16 +9,20 @@
   "repository": "github:lugovykh/lemodu",
   "author": {
     "name": "Sergey Lugovykh",
-    "email": "sergeylugovykh@ya.ru",
+    "email": "sergelugovykh@gmail.com",
     "url": "https://vk.com/sergeylugovykh"
   },
   "license": "MIT",
+  "dependencies": {
+    "eslint": "^7.4.0",
+    "mongodb": ""
+  },
   "devDependencies": {
-    "eslint": "*",
-    "eslint-config-standard": "*",
-    "eslint-plugin-import": "*",
-    "eslint-plugin-node": "*",
-    "eslint-plugin-promise": "*",
-    "eslint-plugin-standard": "*"
+    "eslint": "",
+    "eslint-config-standard": "",
+    "eslint-plugin-import": "",
+    "eslint-plugin-node": "",
+    "eslint-plugin-promise": "",
+    "eslint-plugin-standard": ""
   }
 }

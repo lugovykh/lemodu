@@ -1,14 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Have a good day!</title>
-  <link rel="shortcut icon" href="/favicon.ico">
+  <script>
+    /* quick recovery of page parameters */
+    const pageTitle = sessionStorage.getItem('pageTitle')
+    if (pageTitle) document.title = pageTitle
+    document.currentScript.remove()
+  </script>
+  <script async type="module" src="/app.js"></script>
   <link rel="stylesheet" href="/theme.css">
-  <script type="module" src="/app.js"></script>
+  <link rel="shortcut icon" href="/favicon.ico">
 </head>
 
 <body></body>
