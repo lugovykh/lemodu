@@ -26,7 +26,7 @@ template.innerHTML = `
 <slot></slot>
 `
 
-class AppCardMeta extends HTMLElement {
+class AppDatacardMeta extends HTMLElement {
   constructor () {
     super()
 
@@ -48,4 +48,4 @@ class AppCardMeta extends HTMLElement {
   }
 }
 
-customElements.define('app-card-meta', AppCardMeta)
+customElements.define('app-datacard-meta', AppDatacardMeta)

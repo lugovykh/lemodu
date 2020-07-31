@@ -74,7 +74,6 @@ new http.Server(async (req, res) => {
   res.setHeader('Content-Type', contentTypes.get(fileExtension))
   res.setHeader('Cache-Control', `public, max-age=${maxAge}${maxAge ? ', immutable' : ''}`)
 
-  console.log(filePath)
   sendFile(path.join(sourceDir, filePath), res)
 }).listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}`)

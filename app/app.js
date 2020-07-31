@@ -2,26 +2,12 @@ import DataBase from './modules/db'
 import Router from './modules/router'
 import './modules/app-header'
 import './modules/app-page'
-import './modules/app-card'
+import './modules/app-datacard'
 
-const mainStyleSheet = new CSSStyleSheet()
-mainStyleSheet.replaceSync(`
-  html, body {
-    overflow: hidden;
-    margin: 0;
-    height: 100%;
-  }
-  body {
-    font-family: var(--font-family);
-    color: var(--content-font-color);
-    background-color: var(--main-bg-color);
-  }
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
-  `)
-document.adoptedStyleSheets = [mainStyleSheet]
+const appName = 'main'
+
+const db = new DataBase()
+const router = new Router(['news', 'users', 'about'])
 
 const styleSheet = new CSSStyleSheet()
 const CSS = `
@@ -38,12 +24,20 @@ template.innerHTML = `
   <slot></slot>
 `
 
-const appName = 'main'
-
-const db = new DataBase()
-const router = new Router(['news', 'users', 'about'])
-
 class App extends HTMLElement {
+  dataStructures = {
+    news: {
+      title: 'title',
+      '': 'content',
+      'top-bar': ['publication_date', 'author']
+    },
+    users: {
+      title: 'nickname',
+      '': 'about',
+      'top-bar': ['first_name', 'last_name', 'birth_date']
+    }
+  }
+
   constructor () {
     super()
 
@@ -63,6 +57,46 @@ class App extends HTMLElement {
     })
   }
 
+  createDatacard (rawData, dataType) {
+    const dataStructure = this.dataStructures[dataType]
+    const fieldContentTypes = {
+      users: 'nickname'
+    }
+
+    const fieldHandler = (rawField) => {
+      const field = {}
+
+      if (rawField.id) {
+        const { id, type } = rawField
+        const contentName = fieldContentTypes[type]
+        field.content = rawField[contentName]
+        field.href = router.generateUri({ type, id })
+      } else if (rawField.length === 24 &&
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(rawField)
+      ) {
+        field.datetime = rawField
+        field.content = new Date(rawField)
+        field.content = field.content.toLocaleString()
+      } else if (rawField.length === 10 &&
+        /^\d{4}-\d{2}-\d{2}$/.test(rawField)
+      ) {
+        field.datetime = rawField
+        field.content = new Date(rawField)
+        field.content = field.content.toLocaleDateString()
+      } else {
+        field.content = rawField
+      }
+      return field
+    }
+
+    const datacard = document.createElement('app-datacard')
+    datacard.rawData = rawData
+    datacard.structure = dataStructure
+    datacard.handler = fieldHandler
+
+    return datacard
+  }
+
   async render () {
     const startTime = Date.now()
     const params = await router.getParams()
@@ -73,91 +107,31 @@ class App extends HTMLElement {
     const type = params.get('type')
     const id = params.get('id')
     const newPage = document.createElement('app-page')
-    const cardStructures = {
-      news: {
-        title: 'title',
-        content: 'content',
-        'top-bar': ['publication_date', 'author']
-      },
-      users: {
-        title: 'nickname',
-        content: 'about',
-        'top-bar': ['first_name', 'last_name', 'birth_date']
-      }
-    }
 
-    if (this.header == null) {
+    if (!this.header) {
       this.header = document.createElement('app-header')
       this.append(this.header)
     }
     if (id) {
       newPage.classList.add('item')
-      newPage.append(await this.createCard(data, { type, id, cardStructures }))
+      newPage.append(this.createDatacard(data, type))
     } else {
-      for await (const [id, entry] of Object.entries(data)) {
-        newPage.append(await this.createCard(entry, { type, id, cardStructures }))
+      for (const [id, entry] of Object.entries(data)) {
+        const datacard = this.createDatacard(entry, type)
+        datacard.id = `${type}${id}`
+        newPage.append(datacard)
       }
     }
-    if (this.page == null) {
+    if (!this.page) {
       this.append(newPage)
     } else {
       this.page.replaceWith(newPage)
     }
+
     document.title = `${type} — ${appName}`
     sessionStorage.setItem('pageTitle', document.title)
     this.page = newPage
     console.log(`${this.constructor.name}: ${Date.now() - startTime}ms`)
-  }
-
-  async createCard (entry, { type, id, cardStructures }) {
-    const card = document.createElement('app-card')
-    card.dataset.href = await router.getUri({ type, id })
-
-    const createMeta = async (key, value) => {
-      const meta = document.createElement('app-card-meta')
-      let content = value
-
-      if (value.type) {
-        const { type, id } = value
-        const { title } = cardStructures[type]
-        content = document.createElement('a')
-        content.setAttribute('href', await router.getUri({ type, id }))
-        content.append(value[title])
-      } else if (/_date$/.test(key)) {
-        const date = new Date(value)
-        content = document.createElement('time')
-        content.setAttribute('datetime', value)
-        if (value.length <= 10) {
-          content.append(date.toLocaleDateString())
-        } else {
-          content.append(date.toLocaleString())
-        }
-      }
-      meta.dataset.label = key
-      meta.append(content)
-      return meta
-    }
-
-    for await (const [slot, key] of Object.entries(cardStructures[type])) {
-      if (slot === 'title') {
-        const title = document.createElement('h2')
-        title.setAttribute('slot', slot)
-        title.append(entry[key])
-        card.append(title)
-      } else if (slot === 'content') {
-        card.append(entry[key])
-      } else {
-        const keys = key
-        for await (const key of keys) {
-          const value = entry[key]
-          if (value == null) continue
-          const meta = await createMeta(key, value)
-          meta.setAttribute('slot', slot)
-          card.append(meta)
-        }
-      }
-    }
-    return card
   }
 }
 

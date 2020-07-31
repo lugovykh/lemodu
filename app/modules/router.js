@@ -63,7 +63,7 @@ export default class Router {
       params.set(...entry.split('='))
     }
 
-    if (await this.getUri(params) !== url) {
+    if (await this.generateUri(params) !== url) {
       throw new URIError(`Invalid URI: ${url}`)
     }
 
@@ -72,14 +72,14 @@ export default class Router {
     return params
   }
 
-  async getUri (params) {
+  generateUri (params) {
     const pathEntries = []
     const searchEntries = []
 
     params = params.keys instanceof Function
       ? params : new Map(Object.entries(params))
 
-    for await (const [key, value] of params) {
+    for (const [key, value] of params) {
       if (this.pathKeys.has(key)) {
         pathEntries.push(`${value}`)
       } else {

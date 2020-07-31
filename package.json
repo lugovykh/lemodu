@@ -14,15 +14,15 @@
   },
   "license": "MIT",
   "dependencies": {
-    "eslint": "^7.4.0",
-    "mongodb": ""
+    "mongodb": "^3.5.9"
   },
   "devDependencies": {
-    "eslint": "",
-    "eslint-config-standard": "",
-    "eslint-plugin-import": "",
-    "eslint-plugin-node": "",
-    "eslint-plugin-promise": "",
-    "eslint-plugin-standard": ""
+    "eslint": "*",
+    "eslint-config-standard": "*",
+    "eslint-plugin-standard": "*",
+    "eslint-plugin-promise": "*",
+    "eslint-plugin-import": "*",
+    "eslint-plugin-node": "*",
+    "babel-eslint": "*"
   }
 }
