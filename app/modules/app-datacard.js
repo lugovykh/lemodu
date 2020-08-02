@@ -52,6 +52,7 @@ template.innerHTML = `
   <a id="title"><slot name="title"></slot></a>
   <slot name="top-bar"></slot>
   <slot></slot>
+  <slot name="bottom-bar"></slot>
 `
 
 class AppDatacard extends HTMLElement {
@@ -88,46 +89,48 @@ class AppDatacard extends HTMLElement {
 
     const data = this.#data ?? this.prepareData()
 
-    const wrapField = (field, wrapper) => {
-      if (wrapper && wrapper !== field) {
-        wrapper.append(field)
-        field = wrapper
+    const wrapСontent = (content, wrapper) => {
+      if (wrapper?.append && wrapper !== content) {
+        wrapper.append(content)
+        return wrapper
+      } else {
+        return content
       }
-      return field
     }
 
     for (const [fieldName, fieldProps] of Object.entries(data)) {
       const { slot, href, src, datetime } = fieldProps
-      let { content: field } = fieldProps
+      let { content } = fieldProps
       let wrapper
 
       if (datetime) {
         wrapper = document.createElement('time')
-        wrapper.setAttribute('datetime', datetime)
+        wrapper.dateTime = datetime
       } else if (src) {
         wrapper = document.createElement('img')
-        wrapper.setAttribute('src', src)
+        wrapper.src = src
       }
-      field = wrapField(field, wrapper)
+      content = wrapСontent(content, wrapper)
 
       if (href) {
         wrapper = document.createElement('a')
-        wrapper.setAttribute('href', href)
+        wrapper.href = href
       }
-      field = wrapField(field, wrapper)
+      content = wrapСontent(content, wrapper)
 
       if (slot === 'title') {
         wrapper = document.createElement('h2')
-        wrapper.setAttribute('slot', slot)
       } else if (/-bar$/.test(slot)) {
         wrapper = document.createElement('app-datacard-meta')
-        wrapper.setAttribute('slot', slot)
         wrapper.dataset.label = fieldName
+      } else if (!wrapper) {
+        wrapper = document.createElement('div')
       }
-      field = wrapField(field, wrapper)
+      content = wrapСontent(content, wrapper)
 
-      field.setAttribute?.('id', fieldName)
-      this.append(field)
+      content.id ||= fieldName
+      content.slot ||= slot
+      this.append(content)
     }
     return this
   }
@@ -135,26 +138,22 @@ class AppDatacard extends HTMLElement {
   prepareData ({ rawData, structure, handler } = this) {
     const data = {}
 
-    for (const [slot, fieldNames] of Object.entries(structure)) {
-      if (Array.isArray(fieldNames)) {
-        for (const [order, key] of fieldNames.entries()) {
-          const rawField = rawData[key]
-          if (!rawField) continue
+    const addField = (fieldName, slot) => {
+      const rawField = rawData[fieldName]
+      if (!rawField) return
 
-          const field = handler(rawField)
-          data[key] = field
+      const field = handler(rawField)
+      field.slot = slot
+      data[fieldName] = field
+    }
 
-          field.slot ??= slot
-          field.order ??= order
+    for (const [slot, fieldName] of Object.entries(structure)) {
+      if (Array.isArray(fieldName)) {
+        for (const key of fieldName.keys()) {
+          addField(fieldName[key], slot)
         }
       } else {
-        const key = fieldNames
-        const rawField = rawData[key]
-        if (!rawField) continue
-
-        const field = handler(rawField)
-        data[key] = field
-        field.slot ??= slot
+        addField(fieldName, slot)
       }
     }
     return data
