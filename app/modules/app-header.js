@@ -1,4 +1,4 @@
-import './app-menu'
+import './app-menu.js'
 
 const styleSheet = new CSSStyleSheet()
 const CSS = `

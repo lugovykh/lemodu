@@ -35,7 +35,7 @@ class AppDatacardMeta extends HTMLElement {
     this.shadowRoot.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback () {
+  connectedCallback () {
     if (styleSheet.cssRules.length === 0) {
       styleSheet.replaceSync(CSS)
     }
@@ -43,7 +43,7 @@ class AppDatacardMeta extends HTMLElement {
     this.render()
   }
 
-  async render () {
+  render () {
     this.shadowRoot.querySelector('#label').append(this.dataset.label)
   }
 }

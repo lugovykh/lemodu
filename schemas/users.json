@@ -1,0 +1,25 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "required": [
+      "nickname"
+    ],
+    "properties": {
+      "nickname": {
+        "bsonType": "string"
+      },
+      "first_name": {
+        "bsonType": "string"
+      },
+      "last_name": {
+        "bsonType": "string"
+      },
+      "birth_date": {
+        "bsonType": "date"
+      },
+      "about": {
+        "bsonType": "string"
+      }
+    }
+  }
+}

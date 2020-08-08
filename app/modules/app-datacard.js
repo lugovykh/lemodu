@@ -1,4 +1,4 @@
-import './app-datacard-meta'
+import './app-datacard-meta.js'
 
 const styleSheet = new CSSStyleSheet()
 const CSS = `
@@ -20,7 +20,7 @@ const CSS = `
     border-radius: var(--content-border-radius);
   }
   ::slotted(*) {
-    margin: 0 0 16px;
+    margin: 0 0 1em;
   }
   a#title {
     max-width: 100%;
@@ -42,7 +42,7 @@ const CSS = `
     white-space: pre-wrap;
     text-align: justify;
   }
-  slot[name$="-bar"] {
+  slot[name$="Bar"] {
     display: flex;
     flex-flow: row wrap;
   }
@@ -50,9 +50,9 @@ const CSS = `
 const template = document.createElement('template')
 template.innerHTML = `
   <a id="title"><slot name="title"></slot></a>
-  <slot name="top-bar"></slot>
+  <slot name="topBar"></slot>
   <slot></slot>
-  <slot name="bottom-bar"></slot>
+  <slot name="bottomBar"></slot>
 `
 
 class AppDatacard extends HTMLElement {
@@ -120,7 +120,7 @@ class AppDatacard extends HTMLElement {
 
       if (slot === 'title') {
         wrapper = document.createElement('h2')
-      } else if (/-bar$/.test(slot)) {
+      } else if (/Bar$/.test(slot)) {
         wrapper = document.createElement('app-datacard-meta')
         wrapper.dataset.label = fieldName
       } else if (!wrapper) {

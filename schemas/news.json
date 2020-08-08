@@ -1,0 +1,25 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "required": [
+      "title",
+      "publication_date",
+      "author",
+      "content"
+    ],
+    "properties": {
+      "title": {
+        "bsonType": "string"
+      },
+      "publication_date": {
+        "bsonType": "date"
+      },
+      "author": {
+        "bsonType": "string"
+      },
+      "content": {
+        "bsonType": "string"
+      }
+    }
+  }
+}

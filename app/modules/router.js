@@ -10,7 +10,7 @@ export default class Router {
     this.pages = new Set(pages)
     this.pathKeys = new Set(pathKeys)
 
-    addEventListener('click', async e => {
+    addEventListener('click', e => {
       if (e.altKey || e.ctrlKey || e.shiftKey) return
       const link = e.path.find(target => {
         return target.tagName === 'A' && target.href
@@ -31,7 +31,7 @@ export default class Router {
     return strPath
   }
 
-  async getParams ({ pathname, search } = location) {
+  getParams ({ pathname, search } = location) {
     const url = `${pathname}${search}`
     if (this.#params.has(url)) {
       return this.#params.get(url)
@@ -45,7 +45,7 @@ export default class Router {
       throw new URIError(`Invalid URI: ${url}`)
     }
 
-    for await (const key of this.pathKeys) {
+    for (const key of this.pathKeys) {
       const value = rawParamsIterator.next().value
 
       if (value) {
@@ -57,13 +57,13 @@ export default class Router {
 
     rawParams = search.slice(1).split('&')
 
-    for await (const entry of rawParams) {
+    for (const entry of rawParams) {
       if (!entry) break
 
       params.set(...entry.split('='))
     }
 
-    if (await this.generateUri(params) !== url) {
+    if (this.generateUri(params) !== url) {
       throw new URIError(`Invalid URI: ${url}`)
     }
 
@@ -90,7 +90,7 @@ export default class Router {
       `${searchEntries.length ? searchEntries.join('&') : ''}`
   }
 
-  async go ({ pathname, search, hash }) {
+  go ({ pathname, search, hash }) {
     pathname = this.normalizePathname(pathname)
 
     if (pathname === location.pathname &&

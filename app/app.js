@@ -1,12 +1,10 @@
-import DataBase from './modules/db'
-import Router from './modules/router'
-import './modules/app-header'
-import './modules/app-page'
-import './modules/app-datacard'
+import Router from './modules/router.js'
+import './modules/app-header.js'
+import './modules/app-page.js'
+import './modules/app-datacard.js'
 
 const appName = 'main'
 
-const db = new DataBase()
 const router = new Router(['news', 'users', 'about'])
 
 const styleSheet = new CSSStyleSheet()
@@ -28,13 +26,13 @@ class App extends HTMLElement {
   dataStructures = {
     news: {
       title: 'title',
-      '': 'content',
-      'top-bar': ['publication_date', 'author']
+      topBar: ['publication_date', 'author'],
+      '': 'content'
     },
     users: {
       title: 'nickname',
-      '': 'about',
-      'top-bar': ['first_name', 'last_name', 'birth_date']
+      topBar: ['first_name', 'last_name', 'birth_date'],
+      '': 'about'
     }
   }
 
@@ -46,13 +44,13 @@ class App extends HTMLElement {
     this.shadowRoot.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback () {
+  connectedCallback () {
     if (styleSheet.cssRules.length === 0) {
       styleSheet.replaceSync(CSS)
     }
 
     this.render()
-    addEventListener('popstate', async () => {
+    addEventListener('popstate', () => {
       this.render()
     })
   }
@@ -99,11 +97,12 @@ class App extends HTMLElement {
 
   async render () {
     const startTime = Date.now()
-    const params = await router.getParams()
+    const params = router.getParams()
     if (params.size === 0) {
       params.set('type', 'news')
     }
-    const data = await db.get(params)
+    let data = await fetch(location.pathname.length > 1 ? location.pathname : 'news') // must be fixed
+    data = await data.json()
     const type = params.get('type')
     const id = params.get('id')
     const newPage = document.createElement('app-page')
