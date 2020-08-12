@@ -22,18 +22,16 @@ const CSS = `
   ::slotted(*) {
     margin: 0 0 1em;
   }
-  a#title {
-    max-width: 100%;
-    align-self: center;
-    text-decoration: none;
-  }
   ::slotted(h2) {
+    align-self: center;
+    max-width: 100%;
     overflow: hidden;
     font-size: 1.2em;
     font-weight: 600;
     font-variant: small-caps;
     color: var(--titel-font-color);
     white-space: nowrap;
+    text-decoration: none;
     text-overflow: ellipsis;
   }
   ::slotted(p) {
@@ -49,7 +47,7 @@ const CSS = `
 `
 const template = document.createElement('template')
 template.innerHTML = `
-  <a id="title"><slot name="title"></slot></a>
+  <slot name="title"></slot>
   <slot name="topBar"></slot>
   <slot></slot>
   <slot name="bottomBar"></slot>
@@ -74,17 +72,9 @@ class AppDatacard extends HTMLElement {
     this.render()
   }
 
-  set data (data) {
-    this.#data = data
-  }
-
-  get data () {
-    return this.#data
-  }
-
   render () {
-    if (!this.data?.toString && !this.rawData?.toString) {
-      throw new Error(`Invalid data: ${this.data}`)
+    if (!this.data?.toString) {
+      throw new Error(`Invalid or empty data: ${this.data}`)
     }
 
     const data = this.#data ?? this.prepareData()
@@ -128,35 +118,37 @@ class AppDatacard extends HTMLElement {
       }
       content = wrapСontent(content, wrapper)
 
-      content.id ||= fieldName
-      content.slot ||= slot
+      content.id = fieldName
+      content.slot = slot
       this.append(content)
     }
     return this
   }
 
-  prepareData ({ rawData, structure, handler } = this) {
-    const data = {}
+  prepareData ({ data, structure, handler } = this) {
+    const processedData = {}
 
     const addField = (fieldName, slot) => {
-      const rawField = rawData[fieldName]
+      const rawField = data[fieldName]
       if (!rawField) return
 
       const field = handler(rawField)
       field.slot = slot
-      data[fieldName] = field
+      processedData[fieldName] = field
     }
 
-    for (const [slot, fieldName] of Object.entries(structure)) {
-      if (Array.isArray(fieldName)) {
-        for (const key of fieldName.keys()) {
-          addField(fieldName[key], slot)
+    for (const [slot, fieldNames] of Object.entries(structure)) {
+      if (Array.isArray(fieldNames)) {
+        for (const key of fieldNames.keys()) {
+          const fieldName = fieldNames[key]
+          addField(fieldName, slot)
         }
       } else {
+        const fieldName = fieldNames
         addField(fieldName, slot)
       }
     }
-    return data
+    return processedData
   }
 }
 

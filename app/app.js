@@ -61,11 +61,11 @@ class App extends HTMLElement {
       users: 'nickname'
     }
 
-    const fieldHandler = (rawField) => {
+    const dataHandler = (rawField) => {
       const field = {}
 
-      if (rawField.id) {
-        const { id, type } = rawField
+      if (rawField._id) {
+        const { _id: id, type } = rawField
         const contentName = fieldContentTypes[type]
         field.content = rawField[contentName]
         field.href = router.generateUri({ type, id })
@@ -88,9 +88,12 @@ class App extends HTMLElement {
     }
 
     const datacard = document.createElement('app-datacard')
-    datacard.rawData = rawData
+    datacard.data = rawData
     datacard.structure = dataStructure
-    datacard.handler = fieldHandler
+    datacard.handler = dataHandler
+
+    datacard.classList.add(dataType)
+    datacard.id = rawData._id
 
     return datacard
   }
@@ -101,8 +104,9 @@ class App extends HTMLElement {
     if (params.size === 0) {
       params.set('type', 'news')
     }
-    let data = await fetch(location.pathname.length > 1 ? location.pathname : 'news') // must be fixed
+    let data = await fetch(`${location.pathname.length > 1 ? location.pathname : 'news'}?data`) // must be fixed
     data = await data.json()
+    console.log(data)
     const type = params.get('type')
     const id = params.get('id')
     const newPage = document.createElement('app-page')
@@ -115,9 +119,8 @@ class App extends HTMLElement {
       newPage.classList.add('item')
       newPage.append(this.createDatacard(data, type))
     } else {
-      for (const [id, entry] of Object.entries(data)) {
+      for (const entry of data) {
         const datacard = this.createDatacard(entry, type)
-        datacard.id = `${type}${id}`
         newPage.append(datacard)
       }
     }

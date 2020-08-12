@@ -1,47 +1,64 @@
 const http = require('http')
 const path = require('path')
 const fs = require('fs')
-const db = require('./modules/db.js')
+const zlib = require('zlib')
+const db = require('./modules/db.js').db('lemodu')
+const { ObjectID } = require('mongodb')
 
 const sourceDir = 'app'
-const dbDir = 'db'
 const hostname = 'localhost'
 const port = 3000
-const contentTypes = new Map()
-  .set('.htm', 'text/html')
-  .set('.html', 'text/html')
-  .set('.css', 'text/css')
-  .set('.js', 'application/javascript')
-  .set('.mjs', 'application/javascript')
-  .set('.json', 'application/json')
-  .set('.png', 'image/png')
-  .set('.ico', 'image/x-icon')
-  .set('.svg', 'image/svg+xml')
+const base = `http://${hostname}:${port}`
+const MEDIA_TYPES = {
+  '.md': 'text/markdown',
+  '.html': 'text/html',
+  '.htm': 'text/html',
+  '.json': 'application/json',
+  '.map': 'application/json',
+  '.txt': 'text/plain',
+  '.ts': 'text/typescript',
+  '.tsx': 'text/tsx',
+  '.mjs': 'application/javascript',
+  '.js': 'application/javascript',
+  '.jsx': 'text/jsx',
+  '.gz': 'application/gzip',
+  '.css': 'text/css',
+  '.wasm': 'application/wasm',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.svg': 'image/svg+xml'
+}
+async function send (source, response) {
+  if (!source.pipe) throw Error('Source is not a stream')
 
-async function sendFile (source, res) {
-  const file = new fs.ReadStream(source)
-  file.pipe(res)
-
-  file.on('error', (err) => {
-    res.statusCode = 500
-    res.end('Server error')
+  source.on('error', (err) => {
+    response.statusCode = 500
+    response.end('Server error')
     console.error(err)
   })
-
-  res.on('close', () => {
-    file.destroy()
+  response.on('close', () => {
+    source.destroy()
   })
+  source.pipe(response)
 }
 
 new http.Server(async (req, res) => {
-  const { headers, url } = req
-  const { accept } = headers
-  let { dir, name, ext } = path.parse(url)
+  const { method } = req
+  const url = new URL(req.url, base)
+  let { dir, name, ext } = path.parse(url.pathname)
+  let data, stream
   let maxAge = 31536000
 
   if (!ext) {
-    if (accept.length < 9 || accept.indexOf('text/html') === -1) {
-      dir = path.join(dbDir, dir)
+    if (method !== 'GET' || url.searchParams.has('data')) {
+      if (dir.length > 1) { // dir !== '/'
+        const collectionName = dir.slice(1)
+        const _id = new ObjectID(name)
+        data = await db.collection(collectionName).findOne({ _id })
+      } else {
+        const collectionName = name
+        data = await db.collection(collectionName).find()
+      }
       ext = '.json'
     } else {
       dir = sourceDir
@@ -52,11 +69,35 @@ new http.Server(async (req, res) => {
   } else {
     dir = path.join(sourceDir, dir)
   }
-  res.setHeader('Content-Type', contentTypes.get(ext))
+  if (data?._id) {
+    stream = zlib.createBrotliCompress()
+    stream.end(JSON.stringify(data))
+    res.setHeader('Content-Encoding', 'br')
+  } else if (data) {
+    let comma = ''
+    stream = zlib.createBrotliCompress()
+    stream.write('[')
+    for await (const entry of data) {
+      stream.write(`${comma}${JSON.stringify(entry)}`)
+      comma = ','
+    }
+    stream.end(']')
+    res.setHeader('Content-Encoding', 'br')
+  } else if (
+    /^application/.test(MEDIA_TYPES[ext]) ||
+    /^text/.test(MEDIA_TYPES[ext]) ||
+    /^font/.test(MEDIA_TYPES[ext])
+  ) {
+    stream = new fs.ReadStream(path.format({ dir, name, ext }))
+    stream = stream.pipe(zlib.createBrotliCompress())
+    res.setHeader('Content-Encoding', 'br')
+  } else {
+    stream = new fs.ReadStream(path.format({ dir, name, ext }))
+  }
+  res.setHeader('Content-Type', MEDIA_TYPES[ext] ?? 'application/octet-stream')
   res.setHeader('Cache-Control', `public, max-age=${maxAge}${maxAge ? ', immutable' : ''}`)
 
-  sendFile(path.format({ dir, name, ext }), res)
-}).on('error', console.error
-).listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}`)
+  send(stream, res)
+}).listen(port, hostname, () => {
+  console.log(`Server running at ${base}`)
 })
