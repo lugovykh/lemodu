@@ -1,6 +1,7 @@
-import './app-menu.js'
+import './menu.js'
 
-const styleSheet = new CSSStyleSheet()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const styleSheet: any = new CSSStyleSheet()
 const CSS = `
   :host {
     grid-area: header;
@@ -19,16 +20,17 @@ template.innerHTML = `
   <slot></slot>
 `
 
-export default class AppHeader extends HTMLElement {
-  constructor () {
+class Header extends HTMLElement {
+  constructor() {
     super()
 
-    this.attachShadow({ mode: 'open' })
-    this.shadowRoot.adoptedStyleSheets = [styleSheet]
-    this.shadowRoot.append(template.content.cloneNode(true))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const shadow: any = this.attachShadow({ mode: 'open' })
+    shadow.adoptedStyleSheets = [styleSheet]
+    shadow.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback () {
+  connectedCallback() {
     if (styleSheet.cssRules.length === 0) {
       styleSheet.replaceSync(CSS)
     }
@@ -36,7 +38,7 @@ export default class AppHeader extends HTMLElement {
     this.render()
   }
 
-  async render () {
+  async render() {
     const menu = document.createElement('app-menu')
     const pages = ['news', 'users', 'about']
 
@@ -52,4 +54,4 @@ export default class AppHeader extends HTMLElement {
   }
 }
 
-customElements.define('app-header', AppHeader)
+customElements.define('app-header', Header)

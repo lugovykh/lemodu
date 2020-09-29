@@ -1,9 +1,10 @@
-const styleSheet = new CSSStyleSheet()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const styleSheet: any = new CSSStyleSheet()
 const CSS = `
   :host {
     display: grid;
     grid: none / auto-flow;
-    line-height: 1.2;
+    line-height: 1.5;
     font-weight: 600;
     color: var(--menu-font-color);
     font-variant: small-caps;
@@ -23,16 +24,17 @@ template.innerHTML = `
   <slot></slot>
 `
 
-class AppMenu extends HTMLElement {
-  constructor () {
+export class Menu extends HTMLElement {
+  constructor() {
     super()
 
-    this.attachShadow({ mode: 'open' })
-    this.shadowRoot.adoptedStyleSheets = [styleSheet]
-    this.shadowRoot.append(template.content.cloneNode(true))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const shadow: any = this.attachShadow({ mode: 'open' })
+    shadow.adoptedStyleSheets = [styleSheet]
+    shadow.append(template.content.cloneNode(true))
   }
 
-  async connectedCallback () {
+  connectedCallback(): void {
     if (styleSheet.cssRules.length === 0) {
       styleSheet.replaceSync(CSS)
     }
@@ -40,8 +42,9 @@ class AppMenu extends HTMLElement {
     this.render()
   }
 
-  async render () {
+  render(): void {
+    //
   }
 }
 
-customElements.define('app-menu', AppMenu)
+customElements.define('app-menu', Menu)
