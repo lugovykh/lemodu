@@ -51,7 +51,7 @@ template.innerHTML = `
   <slot name="title"></slot>
   <slot name="basicMeta"></slot>
   <slot name="extraMeta"></slot>
-  <slot></slot>
+  <slot id="content"></slot>
 `
 
 export interface Field {

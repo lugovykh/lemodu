@@ -26,20 +26,20 @@ const CSS = `
     justify-content: center;
     padding: 32px;
   }
-  :host(.collection) > slot:not([name]){
+  slot:not([name]).collection{
     grid: auto / repeat(auto-fit, minmax(320px, 480px));
     grid-gap: 32px;
   }
-  @media (max-width: 600px) {
+  @media (max-width: 384px) {
     slot:not([name]) {
-      padding: 32px 16px;
+      padding: 32px 0;
     }
   }
 `
 const template = document.createElement('template')
 template.innerHTML = `
   <slot name="header"></slot>
-  <slot></slot>
+  <slot id="content"></slot>
 `
 
 interface Data {
@@ -49,7 +49,7 @@ interface Data {
 
 class App extends HTMLElement {
   header?: HTMLElement
-  page?: HTMLElement
+  #content?: HTMLElement | Map<string, HTMLElement>
 
   constructor() {
     super()
@@ -67,6 +67,22 @@ class App extends HTMLElement {
 
     addEventListener('popstate', this.render)
     this.render()
+  }
+
+  updateContent(data: Data | Data[]) {
+    const { type = 'news' } = router.params
+    const slot = this.shadowRoot?.children.namedItem('content') as HTMLSlotElement
+    slot.assignedNodes().forEach(this.removeChild)
+
+    if (Array.isArray(data)) {
+      for (const entry of data) {
+        this.append(this.createDatacard(entry, type))
+      }
+      slot.classList.add('collection')
+    } else {
+      this.append(this.createDatacard(data, type))
+      slot.classList.remove('collection')
+    }
   }
 
   datacardStructures: Map<string, Datacard.Structure> = new Map()
@@ -129,7 +145,6 @@ class App extends HTMLElement {
       `${location.pathname.length ? location.pathname : 'news'}?data`
     )
     const data: Data | Data[] = await dataResponse.json()
-    const newPage = document.createElement('app-page')
 
     if (!this.header) {
       this.header = document.createElement('app-header')
@@ -137,18 +152,10 @@ class App extends HTMLElement {
       this.append(this.header)
     }
 
-    if (Array.isArray(data)) {
-      for (const entry of data) {
-        this.classList.add('collection')
-        this.append(this.createDatacard(entry, type))
-      }
-    } else {
-      this.append(this.createDatacard(data, type))
-    }
+    this.updateContent(data)
 
     document.title = `${type} | ${appName}`
     sessionStorage.setItem('pageTitle', document.title)
-    this.page = newPage
   }
 }
 
