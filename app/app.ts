@@ -65,14 +65,14 @@ class App extends HTMLElement {
       styleSheet.replaceSync(CSS)
     }
 
-    addEventListener('popstate', this.render)
+    addEventListener('popstate', () => this.render())
     this.render()
   }
 
   updateContent(data: Data | Data[]) {
     const { type = 'news' } = router.params
     const slot = this.shadowRoot?.children.namedItem('content') as HTMLSlotElement
-    slot.assignedNodes().forEach(this.removeChild)
+    slot.assignedNodes().forEach(node => (node as ChildNode)?.remove())
 
     if (Array.isArray(data)) {
       for (const entry of data) {
