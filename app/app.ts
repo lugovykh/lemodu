@@ -1,5 +1,5 @@
 import Router from './modules/router.js'
-import './modules/header.js'
+import { Menu } from  './modules/menu.js'
 import * as Datacard from './modules/datacard.js'
 
 const appName = 'noname'
@@ -13,22 +13,29 @@ const CSS = `
     grid: [header-start] "header" [header-end]
       [content-start] "content" [content-end];
   }
-  slot[name="header"] {
-    display: block;
+  header {
+    grid-area: header;
+    display: flex;
+    flex-flow: row;
     position: sticky;
     z-index: 100;
     top: 0;
+    background-color: var(--content-bg-color);
+    border-bottom: var(--menu-border);
   }
-  slot:not([name]) {
+  header ::slotted(*) {
+    margin: 0 auto;
+  }
+  slot:not([name])::slotted(*) {
     grid-area: content;
+  }
+  slot:not([name])::slotted(main) {
     display: grid;
     grid: auto / minmax(320px, 800px);
-    justify-content: center;
-    padding: 32px;
-  }
-  slot:not([name]).collection{
     grid: auto / repeat(auto-fit, minmax(320px, 480px));
-    grid-gap: 32px;
+    gap: 32px;
+    padding: 32px;
+    justify-content: center;
   }
   @media (max-width: 384px) {
     slot:not([name]) {
@@ -38,7 +45,9 @@ const CSS = `
 `
 const template = document.createElement('template')
 template.innerHTML = `
-  <slot name="header"></slot>
+  <header>
+    <slot name="mainMenu"></slot>
+  </header>
   <slot id="content"></slot>
 `
 
@@ -48,9 +57,6 @@ interface Data {
 }
 
 class App extends HTMLElement {
-  header?: HTMLElement
-  #content?: HTMLElement | Map<string, HTMLElement>
-
   constructor() {
     super()
 
@@ -65,24 +71,46 @@ class App extends HTMLElement {
       styleSheet.replaceSync(CSS)
     }
 
-    addEventListener('popstate', () => this.render())
+    addEventListener('popstate', () => this.updateContent())
     this.render()
   }
 
-  updateContent(data: Data | Data[]) {
+  render(): void {
+    const mainMenu = new Menu()
+    mainMenu.slot = 'mainMenu'
+    this.append(mainMenu)
+
+    this.updateContent()
+  }
+
+  async updateContent(): Promise<void> {
     const { type = 'news' } = router.params
-    const slot = this.shadowRoot?.children.namedItem('content') as HTMLSlotElement
-    slot.assignedNodes().forEach(node => (node as ChildNode)?.remove())
+    const dataResponse = await fetch(
+      `${location.pathname.length ? location.pathname : type}?data`
+    )
+    const data: Data | Data[] = await dataResponse.json()
+    const currentContent = this.children.namedItem('content')
+    let content: HTMLElement
 
     if (Array.isArray(data)) {
+      content = document.createElement('main')
       for (const entry of data) {
-        this.append(this.createDatacard(entry, type))
+        const contentItem = this.createDatacard(entry, type)
+        content.append(contentItem)
       }
-      slot.classList.add('collection')
     } else {
-      this.append(this.createDatacard(data, type))
-      slot.classList.remove('collection')
+      content = this.createDatacard(data, type)
     }
+
+    content.id = 'content'
+    if (currentContent) {
+      currentContent.replaceWith(content)
+    } else {
+      this.append(content)
+    }
+
+    document.title = `${type} | ${appName}`
+    sessionStorage.setItem('pageTitle', document.title)
   }
 
   datacardStructures: Map<string, Datacard.Structure> = new Map()
@@ -137,25 +165,6 @@ class App extends HTMLElement {
     datacard.href = router.generateUri({ type: dataType, id: rawData._id.$oid })
 
     return datacard
-  }
-
-  async render(): Promise<void> {
-    const { type = 'news' } = router.params
-    const dataResponse = await fetch(
-      `${location.pathname.length ? location.pathname : 'news'}?data`
-    )
-    const data: Data | Data[] = await dataResponse.json()
-
-    if (!this.header) {
-      this.header = document.createElement('app-header')
-      this.header.slot = 'header'
-      this.append(this.header)
-    }
-
-    this.updateContent(data)
-
-    document.title = `${type} | ${appName}`
-    sessionStorage.setItem('pageTitle', document.title)
   }
 }
 

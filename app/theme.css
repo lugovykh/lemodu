@@ -1,6 +1,6 @@
 :root {
-    --font-family: system-ui, sans-serif;
-    --main-bg-color: #dfdfdf;
+    --font-family: system-ui;
+    --main-bg-color:#f2f2f2;
 
     --menu-font-color: #2f2f2f;
     --menu-border: 2px solid var(--additional-font-color);
@@ -10,10 +10,7 @@
 
     --content-font-color: #2f2f2f;
     --content-bg-color: #fff;
-    --content-border: 2px solid var(--additional-font-color);
-    --content-top-border: var(--content-border);
-    --content-right-border: var(--content-border);
-    --content-bottom-border: var(--content-border);
-    --content-left-border: var(--content-border);
-    --content-border-radius: 0;
+    --content-border: none;
+    --content-border-radius: 1ch;
+    --content-box-shadow: 0 1px 2px rgb(0,0,0,.2);
 }

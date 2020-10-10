@@ -14,11 +14,8 @@ const CSS = `
     color: var(--content-font-color);
     background-color: var(--content-bg-color);
     border: var(--content-border);
-    border-top: var(--content-top-border);
-    border-right: var(--content-right-border);
-    border-bottom: var(--content-bottom-border);
-    border-left: var(--content-left-border);
     border-radius: var(--content-border-radius);
+    box-shadow: var(--content-box-shadow)
   }
   ::slotted(*) {
     margin: 0 0 1em;
@@ -159,7 +156,7 @@ export class Datacard extends HTMLElement {
       const field = handler(rawField)
       if (!field) return
 
-      field.slot = slot
+      field.slot ??= slot
       fieldList[fieldName] = field
     }
 

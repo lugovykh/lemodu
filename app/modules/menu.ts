@@ -2,8 +2,7 @@
 const styleSheet: any = new CSSStyleSheet()
 const CSS = `
   :host {
-    display: grid;
-    grid: none / auto-flow;
+    display: flex;
     line-height: 1.5;
     font-weight: 600;
     color: var(--menu-font-color);
@@ -43,7 +42,15 @@ export class Menu extends HTMLElement {
   }
 
   render(): void {
-    //
+    const pages = ['news', 'users', 'about']
+
+    for (const value of pages) {
+      const item = document.createElement('a')
+      item.href = `/${value}`
+      item.append(value)
+
+      this.append(item)
+    }
   }
 }
 

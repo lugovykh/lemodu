@@ -14,7 +14,7 @@ const CSS = `
     font-weight: 600;
     color: var(--content-font-color);
   }
-  .label {
+  #label {
     font-size: .8em;
     font-weight: normal;
     color: var(--additional-font-color);
@@ -22,7 +22,7 @@ const CSS = `
 `
 const template = document.createElement('template')
 template.innerHTML = `
-<span class="label"></span>
+<span id="label"></span>
 <slot></slot>
 `
 
@@ -58,7 +58,7 @@ export class Meta extends HTMLElement {
 
   render(): void {
     if (this.label) {
-      this.shadowRoot?.querySelector('.label')?.append(this.label)
+      this.shadowRoot?.children.namedItem('label')?.append(this.label)
     }
   }
 }
