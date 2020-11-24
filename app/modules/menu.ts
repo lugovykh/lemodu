@@ -5,17 +5,13 @@ const CSS = `
     display: flex;
     line-height: 1.5;
     font-weight: 600;
-    color: var(--menu-font-color);
+    color: var(--main-font-color);
     font-variant: small-caps;
   }
   ::slotted(*) {
     overflow: hidden;
     white-space: nowrap;
-    padding: 8px 16px;
-  }
-  ::slotted(a) {
-    color: var(--menu-font-color);
-    text-decoration: none;
+    padding: .5em 1em;
   }
 `
 const template = document.createElement('template')

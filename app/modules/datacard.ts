@@ -4,43 +4,40 @@ import { Meta } from './datacard-meta.js'
 const styleSheet: any = new CSSStyleSheet()
 const CSS = `
   :host {
-    position: relative;
     overflow: hidden;
     display: flex;
     flex-flow: column;
     box-sizing: border-box;
-    padding: 8px 16px;
-    text-decoration: none;
+    padding: 1em 2em;
     color: var(--content-font-color);
-    background-color: var(--content-bg-color);
+    background-color: var(--content-background-color);
     border: var(--content-border);
-    border-radius: var(--content-border-radius);
-    box-shadow: var(--content-box-shadow)
+    border-radius: var(--main-border-radius);
+    box-shadow: var(--main-box-shadow);
+    filter: drop-shadow(var(--content-drop-shadow))
   }
   ::slotted(*) {
     margin: 0 0 1em;
   }
   ::slotted(h2) {
-    align-self: center;
     max-width: 100%;
     overflow: hidden;
+    text-align: center;
     font-size: 1.2em;
     font-weight: 600;
     font-variant: small-caps;
     color: var(--titel-font-color);
     white-space: nowrap;
-    text-decoration: none;
     text-overflow: ellipsis;
   }
-  ::slotted(p) {
-    margin: 0 0 1em;
-    font-size: 1em;
-    white-space: pre-wrap;
-    text-align: justify;
-  }
-  slot[name$="Meta"] {
+  [name$="Meta"] {
     display: flex;
     flex-flow: row wrap;
+    justify-content: space-evenly;
+    gap: 1em;
+  }
+  #content::slotted(*) {
+    text-align: justify;
   }
 `
 const template = document.createElement('template')

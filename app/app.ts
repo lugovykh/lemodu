@@ -1,7 +1,6 @@
 import Router from './modules/router.js'
 import { Menu } from  './modules/menu.js'
 import * as Datacard from './modules/datacard.js'
-
 const appName = 'noname'
 const router = new Router(['news', 'users', 'about'])
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10,8 +9,14 @@ const CSS = `
   :host {
     position: relative;
     display: grid;
-    grid: [header-start] "header" [header-end]
-      [content-start] "content" [content-end];
+    grid-template-areas: 
+      "header"
+      "content"
+      "footer";
+    grid-template-rows: auto 1fr auto;
+    font-family: var(--main-font-family);
+    color: var(--main-font-color);
+    background-color: var(--additional-background-color);
   }
   header {
     grid-area: header;
@@ -20,26 +25,31 @@ const CSS = `
     position: sticky;
     z-index: 100;
     top: 0;
-    background-color: var(--content-bg-color);
-    border-bottom: var(--menu-border);
+    background-color: var(--main-background-color);
+    backdrop-filter: blur(var(--main-blur));
+    border-bottom: var(--main-border);
+    box-shadow: var(--main-box-shadow);
+    filter: drop-shadow(var(--main-drop-shadow))
   }
   header ::slotted(*) {
     margin: 0 auto;
   }
-  slot:not([name])::slotted(*) {
+  #content::slotted(main) {
     grid-area: content;
-  }
-  slot:not([name])::slotted(main) {
     display: grid;
     grid: auto / minmax(320px, 800px);
-    grid: auto / repeat(auto-fit, minmax(320px, 480px));
-    gap: 32px;
-    padding: 32px;
+    padding: 2em;
     justify-content: center;
+    align-content: start;
+  }
+  #content::slotted(main.collection) {
+    grid: auto / repeat(auto-fit, minmax(320px, 480px));
+    gap: 2em;
   }
   @media (max-width: 384px) {
-    slot:not([name]) {
-      padding: 32px 0;
+    #content::slotted(main) {
+      padding-left: 0;
+      padding-right: 0;
     }
   }
 `
@@ -90,16 +100,17 @@ class App extends HTMLElement {
     )
     const data: Data | Data[] = await dataResponse.json()
     const currentContent = this.children.namedItem('content')
-    let content: HTMLElement
+    const content = document.createElement('main')
 
     if (Array.isArray(data)) {
-      content = document.createElement('main')
       for (const entry of data) {
         const contentItem = this.createDatacard(entry, type)
         content.append(contentItem)
       }
+      content.classList.add('collection')
     } else {
-      content = this.createDatacard(data, type)
+      content.append(this.createDatacard(data, type))
+      content.classList.remove('collection')
     }
 
     content.id = 'content'

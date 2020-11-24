@@ -1,16 +1,22 @@
 :root {
-    --font-family: system-ui;
-    --main-bg-color:#f2f2f2;
-
-    --menu-font-color: #2f2f2f;
-    --menu-border: 2px solid var(--additional-font-color);
-
-    --titel-font-color: #0f0f0f;
+    /* font parameters */
+    --main-font-family: system-ui;
+    --content-font-family: var(--main-font-family);
+    --main-font-color: #2f2f2f;
     --additional-font-color: #6f6f6f;
-
+    --titel-font-color: #0f0f0f;
     --content-font-color: #2f2f2f;
-    --content-bg-color: #fff;
-    --content-border: none;
-    --content-border-radius: 1ch;
-    --content-box-shadow: 0 1px 2px rgb(0,0,0,.2);
+
+    /* container parameters */
+    --main-background-color: #fff;
+    --additional-background-color: azure;
+    --content-background-color: #fff;
+    --main-border: none;
+    --main-border-radius: 1ch;
+    --main-box-shadow: none;
+
+    /* filters */
+    --main-blur: 0;
+    --main-drop-shadow: 0 8px 16px rgba(0,0,0,.1);
+    --content-drop-shadow: 0 1px 2px rgba(0,0,0,.1);
 }

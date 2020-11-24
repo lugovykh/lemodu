@@ -2,28 +2,22 @@
 const styleSheet: any = new CSSStyleSheet()
 const CSS = `
   :host {
-    flex-grow: 1;
-    flex-basis: 0%;
-    position: relative;
-    overflow: hidden;
     display: flex;
     flex-flow: column;
-    align-items: center;
-    box-sizing: border-box;
-    padding: 0 8px;
-    font-weight: 600;
-    color: var(--content-font-color);
+    text-align: center;
   }
   #label {
     font-size: .8em;
-    font-weight: normal;
     color: var(--additional-font-color);
+  }
+  #content {
+    font-weight: 600;
   }
 `
 const template = document.createElement('template')
 template.innerHTML = `
 <span id="label"></span>
-<slot></slot>
+<slot id="content"></slot>
 `
 
 export class Meta extends HTMLElement {
