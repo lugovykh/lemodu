@@ -48,7 +48,7 @@ template.innerHTML = `
   <slot id="content"></slot>
 `
 
-export interface Field {
+export interface FieldProps {
   content: string
   dateTime?: string
   href?: string
@@ -60,7 +60,7 @@ export interface Structure {
   extraMeta?: string | string[]
   content: string
 }
-export type Handler = (rawField: unknown) => Field | undefined
+export type Handler = (rawField: unknown) => FieldProps | undefined
 
 export class Datacard extends HTMLElement {
   data?: Record<string, unknown>
@@ -97,10 +97,39 @@ export class Datacard extends HTMLElement {
   }
 
   render(): void {
-    const data = this.prepareData()
+    const { data, structure, handler } = this
+    if (!data || !structure || !handler) {
+      throw new TypeError(`Some required properties are undefined: ${{ data, structure, handler }}`)
+    }
 
-    for (const [fieldName, fieldProps] of Object.entries(data)) {
-      this.append(this.createField(fieldName, fieldProps))
+    const prepareFieldProps = (fieldName: string, slotName: string): FieldProps | undefined => {
+      const content = data[fieldName]
+      const fieldProps = handler(content)
+
+      if (fieldProps && slotName !== 'content') {
+        fieldProps.slot ??= slotName
+      }
+      return fieldProps
+    }
+
+    for (const [slotName, fieldNames] of Object.entries(structure)) {
+      if (Array.isArray(fieldNames)) {
+        for (const fieldName of fieldNames) {
+          const fieldProps = prepareFieldProps(fieldName, slotName)
+          if (fieldProps) {
+            this.append(this.createField(fieldName, fieldProps))
+          }
+        }
+      } else {
+        const fieldName = fieldNames
+        const fieldProps = prepareFieldProps(fieldName, slotName)
+        if (fieldProps) {
+          if (slotName === 'title' && this.href) {
+            fieldProps.href = this.href
+          }
+          this.append(this.createField(fieldName, fieldProps))
+        }
+      }
     }
   }
 
@@ -111,7 +140,7 @@ export class Datacard extends HTMLElement {
     return wrapper
   }
 
-  createField(name: string, props: Field): HTMLElement {
+  createField(name: string, props: FieldProps): HTMLElement {
     const { slot, content, dateTime, href } = props
     let field: HTMLElement | undefined, wrapper: HTMLElement
 
@@ -138,37 +167,9 @@ export class Datacard extends HTMLElement {
     }
     field = this.wrapContent(field ?? content, wrapper)
 
-    if (slot && slot !== 'content') field.slot = slot
+    if (slot) field.slot = slot
     field.className = name
     return field
-  }
-
-  prepareData({ data, structure, handler } = this): Record<string, Field> {
-    if (!data || !structure || !handler) {
-      throw new TypeError(`Some required properties are undefined: ${{ data, structure, handler }}`)
-    }
-    const fieldList: Record<string, Field> = {}
-    const addFieldToList = (fieldName: string, slot: string): void => {
-      const rawField = data[fieldName]
-      const field = handler(rawField)
-      if (!field) return
-
-      field.slot ??= slot
-      fieldList[fieldName] = field
-    }
-
-    for (const [slot, fieldNames] of Object.entries(structure)) {
-      if (Array.isArray(fieldNames)) {
-        for (const name of fieldNames) addFieldToList(name, slot)
-      } else {
-        const name = fieldNames
-        addFieldToList(name, slot)
-      }
-    }
-    if (this.href && structure.title) {
-      fieldList[structure.title].href = this.href
-    }
-    return fieldList
   }
 }
 
