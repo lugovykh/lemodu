@@ -1,6 +1,10 @@
 import Router from './modules/router.js'
 import { Menu } from  './modules/menu.js'
-import * as Datacard from './modules/datacard.js'
+import {
+  Datacard,
+  DatacardStructure
+} from './modules/datacard.js'
+
 const appName = 'noname'
 const router = new Router(['news', 'users', 'about'])
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -124,7 +128,7 @@ class App extends HTMLElement {
     sessionStorage.setItem('pageTitle', document.title)
   }
 
-  datacardStructures: Map<string, Datacard.Structure> = new Map()
+  datacardStructures: Map<string, DatacardStructure> = new Map()
     .set('news', {
       title: 'title',
       basicMeta: ['publication_date', 'author'],
@@ -136,16 +140,16 @@ class App extends HTMLElement {
       content: 'about'
     })
 
-  createDatacard(rawData: Data, dataType: string): Datacard.Datacard {
+  createDatacard(rawData: Data, dataType: string): Datacard {
     const fieldNameByType: Record<string, string> = {
       users: 'nickname'
     }
 
-    const datacard = new Datacard.Datacard()
+    const datacard = new Datacard()
     datacard.data = rawData
     datacard.structure = this.datacardStructures.get(dataType)
 
-    datacard.handler = (rawField): ReturnType<Datacard.Handler> => {
+    datacard.handler = (rawField) => {
       if (!rawField) return
       let content: string, href: string | undefined, dateTime: string | undefined
 

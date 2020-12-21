@@ -48,24 +48,33 @@ template.innerHTML = `
   <slot id="content"></slot>
 `
 
-export interface FieldProps {
+export function wrapContent<T extends HTMLElement>(
+  field: string | T,
+  wrapper: T
+): T {
+  if (wrapper !== field) {
+    wrapper.append(field)
+  }
+  return wrapper
+}
+
+export interface DatacardFieldProps {
   content: string
   dateTime?: string
   href?: string
   slot?: string
 }
-export interface Structure {
+export interface DatacardStructure {
   title?: string
   basicMeta?: string | string[]
   extraMeta?: string | string[]
   content: string
 }
-export type Handler = (rawField: unknown) => FieldProps | undefined
 
 export class Datacard extends HTMLElement {
   data?: Record<string, unknown>
-  structure?: Structure
-  handler?: Handler
+  structure?: DatacardStructure
+  handler?: (rawField: unknown) => DatacardFieldProps | undefined
 
   constructor() {
     super()
@@ -99,10 +108,12 @@ export class Datacard extends HTMLElement {
   render(): void {
     const { data, structure, handler } = this
     if (!data || !structure || !handler) {
-      throw new TypeError(`Some required properties are undefined: ${{ data, structure, handler }}`)
+      throw new TypeError(
+        `Some required properties are undefined: ${{ data, structure, handler }}`
+      )
     }
 
-    const prepareFieldProps = (fieldName: string, slotName: string): FieldProps | undefined => {
+    const prepareFieldProps = (fieldName: string, slotName: string): DatacardFieldProps | undefined => {
       const content = data[fieldName]
       const fieldProps = handler(content)
 
@@ -133,26 +144,19 @@ export class Datacard extends HTMLElement {
     }
   }
 
-  wrapContent<T extends HTMLElement>(field: string | T, wrapper: T): T {
-    if (wrapper !== field) {
-      wrapper.append(field)
-    }
-    return wrapper
-  }
-
-  createField(name: string, props: FieldProps): HTMLElement {
+  createField(name: string, props: DatacardFieldProps): HTMLElement {
     const { slot, content, dateTime, href } = props
     let field: HTMLElement | undefined, wrapper: HTMLElement
 
     if (dateTime) {
       const timeElement = document.createElement('time')
       timeElement.dateTime = dateTime
-      field = this.wrapContent(content, timeElement)
+      field = wrapContent(content, timeElement)
     }
     if (href) {
       const anchorElement = document.createElement('a')
       anchorElement.href = href
-      field = this.wrapContent(field ?? content, anchorElement)
+      field = wrapContent(field ?? content, anchorElement)
     }
 
     if (slot === 'title') {
@@ -165,7 +169,7 @@ export class Datacard extends HTMLElement {
     } else {
       wrapper = document.createElement('div')
     }
-    field = this.wrapContent(field ?? content, wrapper)
+    field = wrapContent(field ?? content, wrapper)
 
     if (slot) field.slot = slot
     field.className = name
