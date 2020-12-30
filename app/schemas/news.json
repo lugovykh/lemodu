@@ -1,25 +1,26 @@
 {
-  "$jsonSchema": {
-    "bsonType": "object",
-    "required": [
-      "title",
-      "publication_date",
-      "author",
-      "content"
-    ],
-    "properties": {
-      "title": {
-        "bsonType": "string"
-      },
-      "publication_date": {
-        "bsonType": "date"
-      },
-      "author": {
-        "bsonType": "string"
-      },
-      "content": {
-        "bsonType": "string"
-      }
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "maxLength": 50
+        },
+    "publication_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "author": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 10e4
     }
-  }
+  },
+  "required": [
+    "title",
+    "author",
+    "content"
+  ]
 }

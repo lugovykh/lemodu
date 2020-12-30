@@ -61,9 +61,27 @@ export interface DatacardStructure {
   content: string
 }
 
-export interface JsonSchema {
-  type: 'string' | 'number' | 'object' | 'array' | 'boolean' | 'null'
-  properties: Record<string, JsonSchema> | { '$ref': string }
+export type DatacardJsonSchema = {
+  type: 'string'
+  minLength: number
+  maxLength: number
+  pattern: string
+  format:
+  | 'date-time'
+  | 'time'
+  | 'date'
+  | 'email'
+} | {
+  type: 'number'
+} | {
+  type: 'object'
+  properties: Record<string, DatacardJsonSchema>
+} | {
+  type: 'array'
+} | {
+  type: 'boolean'
+} | {
+  type: 'null'
 }
 
 export function wrapContent<T extends HTMLElement> (

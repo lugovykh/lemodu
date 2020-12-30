@@ -1,25 +1,28 @@
 {
-  "$jsonSchema": {
-    "bsonType": "object",
-    "required": [
-      "nickname"
-    ],
-    "properties": {
-      "nickname": {
-        "bsonType": "string"
-      },
-      "first_name": {
-        "bsonType": "string"
-      },
-      "last_name": {
-        "bsonType": "string"
-      },
-      "birth_date": {
-        "bsonType": "date"
-      },
-      "about": {
-        "bsonType": "string"
-      }
+  "type": "object",
+  "properties": {
+    "nickname": {
+      "type": "string",
+      "maxLength": 24
+    },
+    "first_name": {
+      "type": "string",
+      "maxLength": 24
+    },
+    "last_name": {
+      "type": "string",
+      "maxLength": 48
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "about": {
+      "type": "string",
+      "maxLength": 10e3
     }
-  }
+  },
+  "required": [
+    "nickname"
+  ]
 }
