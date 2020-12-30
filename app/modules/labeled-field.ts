@@ -20,8 +20,8 @@ template.innerHTML = `
 <slot id="content"></slot>
 `
 
-export class Meta extends HTMLElement {
-  constructor() {
+export default class LabeledField extends HTMLElement {
+  constructor () {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,31 +30,31 @@ export class Meta extends HTMLElement {
     shadow.append(template.content.cloneNode(true))
   }
 
-  connectedCallback(): void {
+  connectedCallback (): void {
     if (styleSheet.cssRules.length === 0) {
-      styleSheet.replaceSync(CSS)
+      styleSheet.replace(CSS)
     }
 
     this.render()
   }
 
-  get label(): string {
+  get label (): string {
     return this.getAttribute('label') ?? ''
   }
 
-  set label(value: string) {
-    if (value) {
+  set label (value: string) {
+    if (value !== '') {
       this.setAttribute('label', value)
     } else {
       this.removeAttribute('label')
     }
   }
 
-  render(): void {
-    if (this.label) {
+  render (): void {
+    if (this.label !== '') {
       this.shadowRoot?.children.namedItem('label')?.append(this.label)
     }
   }
 }
 
-customElements.define('datacard-meta', Meta)
+customElements.define('app-labeled-field', LabeledField)

@@ -19,8 +19,8 @@ template.innerHTML = `
   <slot></slot>
 `
 
-export class Menu extends HTMLElement {
-  constructor() {
+export default class Menu extends HTMLElement {
+  constructor () {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,15 +29,15 @@ export class Menu extends HTMLElement {
     shadow.append(template.content.cloneNode(true))
   }
 
-  connectedCallback(): void {
+  connectedCallback (): void {
     if (styleSheet.cssRules.length === 0) {
-      styleSheet.replaceSync(CSS)
+      styleSheet.replace(CSS)
     }
 
     this.render()
   }
 
-  render(): void {
+  render (): void {
     const pages = ['news', 'users', 'about']
 
     for (const value of pages) {

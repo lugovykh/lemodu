@@ -1,7 +1,6 @@
 import Router from './modules/router.js'
-import { Menu } from  './modules/menu.js'
-import {
-  Datacard,
+import Menu from './modules/menu.js'
+import Datacard, {
   DatacardStructure
 } from './modules/datacard.js'
 
@@ -33,7 +32,7 @@ const CSS = `
     backdrop-filter: blur(var(--main-blur));
     border-bottom: var(--main-border);
     box-shadow: var(--main-box-shadow);
-    filter: drop-shadow(var(--main-drop-shadow))
+    filter: drop-shadow(var(--main-drop-shadow));
   }
   header ::slotted(*) {
     margin: 0 auto;
@@ -71,7 +70,7 @@ interface Data {
 }
 
 class App extends HTMLElement {
-  constructor() {
+  constructor () {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,27 +79,28 @@ class App extends HTMLElement {
     shadow.append(template.content.cloneNode(true))
   }
 
-  connectedCallback(): void {
+  async connectedCallback (): Promise<void> {
     if (styleSheet.cssRules.length === 0) {
-      styleSheet.replaceSync(CSS)
+      styleSheet.replace(CSS)
     }
 
-    addEventListener('popstate', () => this.updateContent())
-    this.render()
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    addEventListener('popstate', async () => await this.updateContent())
+    await this.render()
   }
 
-  render(): void {
+  async render (): Promise<void> {
     const mainMenu = new Menu()
     mainMenu.slot = 'mainMenu'
     this.append(mainMenu)
 
-    this.updateContent()
+    await this.updateContent()
   }
 
-  async updateContent(): Promise<void> {
+  async updateContent (): Promise<void> {
     const { type = 'news' } = router.params
     const dataResponse = await fetch(
-      `${location.pathname.length ? location.pathname : type}?data`
+      `${location.pathname.length > 0 ? location.pathname : type}?data`
     )
     const data: Data | Data[] = await dataResponse.json()
     const currentContent = this.children.namedItem('content')
@@ -118,7 +118,7 @@ class App extends HTMLElement {
     }
 
     content.id = 'content'
-    if (currentContent) {
+    if (currentContent !== null) {
       currentContent.replaceWith(content)
     } else {
       this.append(content)
@@ -140,7 +140,7 @@ class App extends HTMLElement {
       content: 'about'
     })
 
-  createDatacard(rawData: Data, dataType: string): Datacard {
+  createDatacard (rawData: Data, dataType: string): Datacard {
     const fieldNameByType: Record<string, string> = {
       users: 'nickname'
     }
@@ -150,16 +150,16 @@ class App extends HTMLElement {
     datacard.structure = this.datacardStructures.get(dataType)
 
     datacard.handler = (rawField) => {
-      if (!rawField) return
+      if (rawField == null) return
       let content: string, href: string | undefined, dateTime: string | undefined
 
-      if ((rawField as Data)?._id) {
+      if ((rawField as Data)?._id != null) {
         const subdata = rawField as Data
         const id = subdata._id.$oid
         const type = dataType
         const fieldName = fieldNameByType[type]
         href = router.generateUri({ type, id })
-        content = `${subdata?.[fieldName]}`
+        content = String(subdata?.[fieldName])
       } else if (typeof rawField === 'string' && rawField.length === 24 &&
         /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(rawField)
       ) {
@@ -171,7 +171,7 @@ class App extends HTMLElement {
         dateTime = rawField
         content = new Date(rawField).toLocaleDateString()
       } else {
-        content = `${rawField}`
+        content = String(rawField)
       }
       return { content, href, dateTime }
     }

@@ -1,4 +1,4 @@
-import { Meta } from './datacard-meta.js'
+import LabeledField from './labeled-field.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
@@ -14,7 +14,7 @@ const CSS = `
     border: var(--content-border);
     border-radius: var(--main-border-radius);
     box-shadow: var(--main-box-shadow);
-    filter: drop-shadow(var(--content-drop-shadow))
+    filter: drop-shadow(var(--content-drop-shadow));
   }
   ::slotted(*) {
     margin: 0 0 1em;
@@ -48,16 +48,6 @@ template.innerHTML = `
   <slot id="content"></slot>
 `
 
-export function wrapContent<T extends HTMLElement>(
-  field: string | T,
-  wrapper: T
-): T {
-  if (wrapper !== field) {
-    wrapper.append(field)
-  }
-  return wrapper
-}
-
 export interface DatacardFieldProps {
   content: string
   dateTime?: string
@@ -71,12 +61,60 @@ export interface DatacardStructure {
   content: string
 }
 
-export class Datacard extends HTMLElement {
+export interface JsonSchema {
+  type: 'string' | 'number' | 'object' | 'array' | 'boolean' | 'null'
+  properties: Record<string, JsonSchema> | { '$ref': string }
+}
+
+export function wrapContent<T extends HTMLElement> (
+  field: string | T,
+  wrapper: T
+): T {
+  if (wrapper !== field) {
+    wrapper.append(field)
+  }
+  return wrapper
+}
+
+export function createField (name: string, props: DatacardFieldProps): HTMLElement {
+  const { slot, content, dateTime, href } = props
+  let field: HTMLElement | undefined
+  let wrapper: HTMLElement
+
+  if (dateTime != null) {
+    const timeElement = document.createElement('time')
+    timeElement.dateTime = dateTime
+    field = wrapContent(content, timeElement)
+  }
+  if (href != null) {
+    const anchorElement = document.createElement('a')
+    anchorElement.href = href
+    field = wrapContent(field ?? content, anchorElement)
+  }
+
+  if (slot === 'title') {
+    const headingElement = document.createElement('h2')
+    wrapper = headingElement
+  } else if (slot?.endsWith('Meta') != null) {
+    const metaElement = new LabeledField()
+    metaElement.label = name
+    wrapper = metaElement
+  } else {
+    wrapper = document.createElement('div')
+  }
+  field = wrapContent(field ?? content, wrapper)
+
+  if (slot != null && slot !== '') field.slot = slot
+  field.className = name
+  return field
+}
+
+export default class Datacard extends HTMLElement {
   data?: Record<string, unknown>
   structure?: DatacardStructure
   handler?: (rawField: unknown) => DatacardFieldProps | undefined
 
-  constructor() {
+  constructor () {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -85,39 +123,34 @@ export class Datacard extends HTMLElement {
     shadow.append(template.content.cloneNode(true))
   }
 
-  connectedCallback(): void {
+  connectedCallback (): void {
     if (styleSheet.cssRules.length === 0) {
-      styleSheet.replaceSync(CSS)
+      styleSheet.replace(CSS)
     }
 
     this.render()
   }
 
-  get href(): string {
+  get href (): string {
     return this.getAttribute('href') ?? ''
   }
 
-  set href(value: string) {
-    if (value) {
+  set href (value: string) {
+    if (value !== '') {
       this.setAttribute('href', value)
     } else {
       this.removeAttribute('href')
     }
   }
 
-  render(): void {
-    const { data, structure, handler } = this
-    if (!data || !structure || !handler) {
-      throw new TypeError(
-        `Some required properties are undefined: ${{ data, structure, handler }}`
-      )
-    }
+  render ({ data, structure, handler } = this): void {
+    if (data == null || structure == null || handler == null) return
 
     const prepareFieldProps = (fieldName: string, slotName: string): DatacardFieldProps | undefined => {
       const content = data[fieldName]
       const fieldProps = handler(content)
 
-      if (fieldProps && slotName !== 'content') {
+      if (fieldProps != null && slotName !== 'content') {
         fieldProps.slot ??= slotName
       }
       return fieldProps
@@ -127,53 +160,21 @@ export class Datacard extends HTMLElement {
       if (Array.isArray(fieldNames)) {
         for (const fieldName of fieldNames) {
           const fieldProps = prepareFieldProps(fieldName, slotName)
-          if (fieldProps) {
-            this.append(this.createField(fieldName, fieldProps))
+          if (fieldProps != null) {
+            this.append(createField(fieldName, fieldProps))
           }
         }
       } else {
         const fieldName = fieldNames
         const fieldProps = prepareFieldProps(fieldName, slotName)
-        if (fieldProps) {
-          if (slotName === 'title' && this.href) {
+        if (fieldProps != null) {
+          if (slotName === 'title' && this.href !== '') {
             fieldProps.href = this.href
           }
-          this.append(this.createField(fieldName, fieldProps))
+          this.append(createField(fieldName, fieldProps))
         }
       }
     }
-  }
-
-  createField(name: string, props: DatacardFieldProps): HTMLElement {
-    const { slot, content, dateTime, href } = props
-    let field: HTMLElement | undefined, wrapper: HTMLElement
-
-    if (dateTime) {
-      const timeElement = document.createElement('time')
-      timeElement.dateTime = dateTime
-      field = wrapContent(content, timeElement)
-    }
-    if (href) {
-      const anchorElement = document.createElement('a')
-      anchorElement.href = href
-      field = wrapContent(field ?? content, anchorElement)
-    }
-
-    if (slot === 'title') {
-      const headingElement = document.createElement('h2')
-      wrapper = headingElement
-    } else if (slot?.endsWith('Meta')) {
-      const metaElement = new Meta()
-      metaElement.label = name
-      wrapper = metaElement
-    } else {
-      wrapper = document.createElement('div')
-    }
-    field = wrapContent(field ?? content, wrapper)
-
-    if (slot) field.slot = slot
-    field.className = name
-    return field
   }
 }
 

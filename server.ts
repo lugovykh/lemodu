@@ -53,7 +53,6 @@ for await (const req of server) {
       data = await db.collection(collectionName).find()
     } else {
       const collectionName = dir.slice(1)
-      // eslint-disable-next-line new-cap
       const _id = ObjectId(name)
       data = await db.collection(collectionName).findOne({ _id })
     }
@@ -66,8 +65,8 @@ for await (const req of server) {
     'Cache-Control',
     `public, max-age=${maxAge}${maxAge ? ', immutable' : ''}`
   )
-  const body = data ?
-    JSON.stringify(data) :
-    await Deno.open(path.format({ dir, name, ext }))
+  const body = data
+    ? JSON.stringify(data)
+    : await Deno.open(path.format({ dir, name, ext }))
   req.respond({ headers, body })
 }

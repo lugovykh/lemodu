@@ -13,7 +13,7 @@ export default class Router {
   pages: Set<string>
   pathKeys: Set<string>
 
-  constructor(pages: string[], pathKeys = ['type', 'id']) {
+  constructor (pages: string[], pathKeys = ['type', 'id']) {
     this.pages = new Set(pages)
     this.pathKeys = new Set(pathKeys)
 
@@ -28,32 +28,32 @@ export default class Router {
         return (element as HTMLElement)?.tagName === 'A' && (element as Link)?.href
       }) as Link | undefined
 
-      if (!link) return
+      if (link == null) return
       e.preventDefault()
       this.go(link)
     })
   }
 
-  get params(): Params {
+  get params (): Params {
     const { pathname, search } = location
     const uri = `${pathname}${search}`
     let params = this.#params?.[uri]
 
-    if (!params) {
+    if (params == null) {
       params = this.getParams({ pathname, search })
       this.#params = { [uri]: params }
     }
     return params
   }
 
-  normalizePathname(pathname = location.pathname): string {
+  normalizePathname (pathname = location.pathname): string {
     if (pathname.length > 2 && pathname.endsWith('/')) {
       return pathname.slice(0, -1)
     }
     return pathname
   }
 
-  getParams({ pathname, search }: Link = location): Params {
+  getParams ({ pathname, search }: Link = location): Params {
     const params: Params = {}
     const pathParams = this.normalizePathname(pathname).split('/')
     const rawParamsIterator = pathParams.values()
@@ -62,13 +62,13 @@ export default class Router {
     for (const key of this.pathKeys) {
       const value = rawParamsIterator.next().value
 
-      if (value) {
+      if (value != null) {
         params[key] = value
-      } else if (rawParamsIterator.next().value) {
-        throw new URIError(`Invalid URI path: ${pathname}`)
+      } else if (rawParamsIterator.next().value != null) {
+        throw new URIError(`Invalid URI path: ${String(pathname)}`)
       } else break
     }
-    if (search) {
+    if (search != null) {
       const searchParams = search.slice(1).split('&')
       for (const entry of searchParams) {
         const [key, value] = entry.split('=')
@@ -78,7 +78,7 @@ export default class Router {
     return params
   }
 
-  generateUri(params: Params): string {
+  generateUri (params: Params): string {
     const pathEntries: string[] = []
     const searchEntries: string[] = []
 
@@ -90,22 +90,22 @@ export default class Router {
       }
     }
     return `/${pathEntries.join('/')}` +
-      `${searchEntries.length ? searchEntries.join('&') : ''}`
+      `${searchEntries.length > 0 ? searchEntries.join('&') : ''}`
   }
 
-  go(link: Link | string): void {
+  go (link: Link | string): void {
     let uri: string | undefined
 
     if (typeof link === 'string') {
       uri = link
-    } else if (link?.pathname) {
+    } else if (link?.pathname != null) {
       const { pathname, search, hash } = link
       if (pathname === location.pathname &&
         search === location.search &&
         hash === location.hash
       ) return
-      uri = `${this.normalizePathname(pathname)}${search}${hash}`
-    } else if (link?.href) {
+      uri = `${this.normalizePathname(pathname)}${search ?? ''}${hash ?? ''}`
+    } else if (link?.href != null) {
       uri = link.href
       if (uri === location.href) return
     }
