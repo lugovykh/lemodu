@@ -99,12 +99,14 @@ export function createField (name: string, props: DatacardFieldProps): HTMLEleme
   let field: HTMLElement | undefined
   let wrapper: HTMLElement
 
-  if (dateTime != null) {
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (dateTime) {
     const timeElement = document.createElement('time')
     timeElement.dateTime = dateTime
     field = wrapContent(content, timeElement)
   }
-  if (href != null) {
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (href) {
     const anchorElement = document.createElement('a')
     anchorElement.href = href
     field = wrapContent(field ?? content, anchorElement)
@@ -122,7 +124,8 @@ export function createField (name: string, props: DatacardFieldProps): HTMLEleme
   }
   field = wrapContent(field ?? content, wrapper)
 
-  if (slot != null && slot !== '') field.slot = slot
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (slot) field.slot = slot
   field.className = name
   return field
 }
