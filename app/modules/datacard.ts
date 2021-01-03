@@ -52,7 +52,7 @@ export interface DatacardFieldProps {
   content: string
   dateTime?: string
   href?: string
-  slot?: string
+  slot: string
 }
 export interface DatacardStructure {
   title?: string
@@ -115,7 +115,7 @@ export function createField (name: string, props: DatacardFieldProps): HTMLEleme
   if (slot === 'title') {
     const headingElement = document.createElement('h2')
     wrapper = headingElement
-  } else if (slot?.endsWith('Meta') != null) {
+  } else if (slot.endsWith('Meta')) {
     const metaElement = new LabeledField()
     metaElement.label = name
     wrapper = metaElement
@@ -124,8 +124,7 @@ export function createField (name: string, props: DatacardFieldProps): HTMLEleme
   }
   field = wrapContent(field ?? content, wrapper)
 
-  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-  if (slot) field.slot = slot
+  if (slot !== '' && slot !== 'content') field.slot = slot
   field.className = name
   return field
 }
@@ -171,7 +170,7 @@ export default class Datacard extends HTMLElement {
       const content = data[fieldName]
       const fieldProps = handler(content)
 
-      if (fieldProps != null && slotName !== 'content') {
+      if (fieldProps != null) {
         fieldProps.slot ??= slotName
       }
       return fieldProps
