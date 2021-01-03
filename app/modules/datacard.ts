@@ -52,7 +52,6 @@ export interface DatacardFieldProps {
   content: string
   dateTime?: string
   href?: string
-  slot: string
 }
 export interface DatacardStructure {
   title?: string
@@ -94,8 +93,8 @@ export function wrapContent<T extends HTMLElement> (
   return wrapper
 }
 
-export function createField (name: string, props: DatacardFieldProps): HTMLElement {
-  const { slot, content, dateTime, href } = props
+export function createField (name: string, props: DatacardFieldProps & { slot?: string }): HTMLElement {
+  const { slot = '', content, dateTime, href } = props
   let field: HTMLElement | undefined
   let wrapper: HTMLElement
 
@@ -166,32 +165,29 @@ export default class Datacard extends HTMLElement {
   render ({ data, structure, handler } = this): void {
     if (data == null || structure == null || handler == null) return
 
-    const prepareFieldProps = (fieldName: string, slotName: string): DatacardFieldProps | undefined => {
+    const prepareFieldProps = (fieldName: string): DatacardFieldProps | undefined => {
       const content = data[fieldName]
       const fieldProps = handler(content)
 
-      if (fieldProps != null) {
-        fieldProps.slot ??= slotName
-      }
       return fieldProps
     }
 
     for (const [slotName, fieldNames] of Object.entries(structure)) {
       if (Array.isArray(fieldNames)) {
         for (const fieldName of fieldNames) {
-          const fieldProps = prepareFieldProps(fieldName, slotName)
+          const fieldProps = prepareFieldProps(fieldName)
           if (fieldProps != null) {
-            this.append(createField(fieldName, fieldProps))
+            this.append(createField(fieldName, { ...fieldProps, slot: slotName }))
           }
         }
       } else {
         const fieldName = fieldNames
-        const fieldProps = prepareFieldProps(fieldName, slotName)
+        const fieldProps = prepareFieldProps(fieldName)
         if (fieldProps != null) {
           if (slotName === 'title' && this.href !== '') {
             fieldProps.href = this.href
           }
-          this.append(createField(fieldName, fieldProps))
+          this.append(createField(fieldName, { ...fieldProps, slot: slotName }))
         }
       }
     }
