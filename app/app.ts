@@ -1,7 +1,9 @@
 import Router from './modules/router.js'
 import Menu from './modules/menu.js'
 import Datacard, {
-  DatacardStructure
+  DatacardJsonSchemaObject,
+  DatacardStructure,
+  DatacardHandler
 } from './modules/datacard.js'
 
 const appName = 'noname'
@@ -69,6 +71,56 @@ interface Data {
   [key: string]: unknown
 }
 
+const datacardStructures: Map<string, DatacardStructure> = new Map()
+  .set('news', {
+    title: 'title',
+    basicMeta: ['publication_date', 'author'],
+    content: 'content'
+  })
+  .set('users', {
+    title: 'nickname',
+    basicMeta: ['first_name', 'last_name', 'birth_date'],
+    content: 'about'
+  })
+
+const datacardHandler: DatacardHandler = (rawField) => {
+  if (rawField == null) return null
+  let content: string, href: string | undefined, dateTime: string | undefined
+
+  if (typeof rawField === 'string' && rawField.length === 24 &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(rawField)
+  ) {
+    dateTime = rawField
+    content = new Date(rawField).toLocaleString()
+  } else if (typeof rawField === 'string' && rawField.length === 10 &&
+    /^\d{4}-\d{2}-\d{2}$/.test(rawField)
+  ) {
+    dateTime = rawField
+    content = new Date(rawField).toLocaleDateString()
+  } else {
+    content = String(rawField)
+  }
+  return { content, href, dateTime }
+}
+
+function createDatacard (
+  data: Data,
+  schema: DatacardJsonSchemaObject,
+  dataType: string
+): Datacard {
+  const datacard = new Datacard({
+    data,
+    schema,
+    structure: datacardStructures.get(dataType),
+    handler: datacardHandler
+  })
+
+  datacard.id = data._id.$oid
+  datacard.href = router.generateUri({ type: dataType, id: data._id.$oid })
+
+  return datacard
+}
+
 class App extends HTMLElement {
   constructor () {
     super()
@@ -103,17 +155,18 @@ class App extends HTMLElement {
       `${location.pathname.length > 0 ? location.pathname : type}?data`
     )
     const data: Data | Data[] = await dataResponse.json()
+    const schema = await (await fetch(`schemas/${type}.json`)).json()
     const currentContent = this.children.namedItem('content')
     const content = document.createElement('main')
 
     if (Array.isArray(data)) {
       for (const entry of data) {
-        const contentItem = this.createDatacard(entry, type)
+        const contentItem = createDatacard(entry, schema, type)
         content.append(contentItem)
       }
       content.classList.add('collection')
     } else {
-      content.append(this.createDatacard(data, type))
+      content.append(createDatacard(data, schema, type))
       content.classList.remove('collection')
     }
 
@@ -127,62 +180,8 @@ class App extends HTMLElement {
     document.title = `${type} | ${appName}`
     sessionStorage.setItem('pageTitle', document.title)
   }
-
-  datacardStructures: Map<string, DatacardStructure> = new Map()
-    .set('news', {
-      title: 'title',
-      basicMeta: ['publication_date', 'author'],
-      content: 'content'
-    })
-    .set('users', {
-      title: 'nickname',
-      basicMeta: ['first_name', 'last_name', 'birth_date'],
-      content: 'about'
-    })
-
-  createDatacard (rawData: Data, dataType: string): Datacard {
-    const fieldNameByType: Record<string, string> = {
-      users: 'nickname'
-    }
-
-    const datacard = new Datacard()
-    datacard.data = rawData
-    datacard.structure = this.datacardStructures.get(dataType)
-
-    datacard.handler = (rawField) => {
-      if (rawField == null) return
-      let content: string, href: string | undefined, dateTime: string | undefined
-
-      if ((rawField as Data)?._id != null) {
-        const subdata = rawField as Data
-        const id = subdata._id.$oid
-        const type = dataType
-        const fieldName = fieldNameByType[type]
-        href = router.generateUri({ type, id })
-        content = String(subdata?.[fieldName])
-      } else if (typeof rawField === 'string' && rawField.length === 24 &&
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(rawField)
-      ) {
-        dateTime = rawField
-        content = new Date(rawField).toLocaleString()
-      } else if (typeof rawField === 'string' && rawField.length === 10 &&
-        /^\d{4}-\d{2}-\d{2}$/.test(rawField)
-      ) {
-        dateTime = rawField
-        content = new Date(rawField).toLocaleDateString()
-      } else {
-        content = String(rawField)
-      }
-      return { content, href, dateTime }
-    }
-
-    datacard.id = rawData._id.$oid
-    datacard.href = router.generateUri({ type: dataType, id: rawData._id.$oid })
-
-    return datacard
-  }
 }
 
-customElements.define('site-app', App)
+customElements.define('app-wrapper', App)
 const app = new App()
 document.body.append(app)

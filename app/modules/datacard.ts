@@ -53,6 +53,7 @@ export interface DatacardFieldProps {
   dateTime?: string
   href?: string
 }
+
 export interface DatacardStructure {
   title?: string
   basicMeta?: string | string[]
@@ -60,27 +61,33 @@ export interface DatacardStructure {
   content: string
 }
 
+export type DatacardHandler =
+  (rawField: unknown) => DatacardFieldProps | null
+
 export type DatacardJsonSchema = {
   type: 'string'
-  minLength: number
-  maxLength: number
-  pattern: string
-  format:
+  minLength?: number
+  maxLength?: number
+  pattern?: string
+  format?:
   | 'date-time'
   | 'time'
   | 'date'
   | 'email'
 } | {
   type: 'number'
-} | {
-  type: 'object'
-  properties: Record<string, DatacardJsonSchema>
-} | {
+} | (
+  { type: 'object' } &
+  DatacardJsonSchemaObject
+) | {
   type: 'array'
 } | {
   type: 'boolean'
 } | {
   type: 'null'
+}
+export interface DatacardJsonSchemaObject {
+  properties: Record<string, DatacardJsonSchema>
 }
 
 export function wrapContent<T extends HTMLElement> (
@@ -93,7 +100,10 @@ export function wrapContent<T extends HTMLElement> (
   return wrapper
 }
 
-export function createField (name: string, props: DatacardFieldProps & { slot?: string }): HTMLElement {
+export function createField (
+  name: string,
+  props: DatacardFieldProps & { slot?: string }
+): HTMLElement {
   const { slot = '', content, dateTime, href } = props
   let field: HTMLElement | undefined
   let wrapper: HTMLElement
@@ -128,18 +138,57 @@ export function createField (name: string, props: DatacardFieldProps & { slot?: 
   return field
 }
 
+export function createFormField (
+  name: string,
+  props: DatacardJsonSchema
+): DocumentFragment {
+  const field = document.createDocumentFragment()
+
+  const label = document.createElement('label')
+  label.textContent = name
+  field.append(label)
+
+  const input = document.createElement('input')
+  switch (props.type) {
+    case 'string':
+      switch (props.format) {
+        case 'date':
+        case 'time':
+        case 'email':
+          input.type = props.format
+          break
+        case 'date-time':
+          input.type = 'datetime-local'
+          break
+
+        default:
+          input.type = 'text'
+      }
+      break
+  }
+  field.append(input)
+
+  return field
+}
+
 export default class Datacard extends HTMLElement {
   data?: Record<string, unknown>
+  schema?: DatacardJsonSchemaObject
   structure?: DatacardStructure
-  handler?: (rawField: unknown) => DatacardFieldProps | undefined
+  handler?: DatacardHandler
 
-  constructor () {
+  constructor ({ data, schema, structure, handler }: Partial<Datacard>) {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shadow: any = this.attachShadow({ mode: 'open' })
     shadow.adoptedStyleSheets = [styleSheet]
     shadow.append(template.content.cloneNode(true))
+
+    this.data = data
+    this.schema = schema
+    this.structure = structure
+    this.handler = handler
   }
 
   connectedCallback (): void {
@@ -148,6 +197,56 @@ export default class Datacard extends HTMLElement {
     }
 
     this.render()
+  }
+
+  render (): void {
+    const { data, schema, structure, handler } = this
+    if (data == null || structure == null || handler == null) return
+
+    const prepareFieldProps = (
+      fieldName: string
+    ): DatacardFieldProps | null => {
+      const content = data[fieldName]
+      const fieldProps = handler(content)
+
+      return fieldProps
+    }
+
+    if (!this.classList.contains('edit')) {
+      if (schema == null) return
+
+      const form = document.createElement('form')
+      for (const [fieldName, fieldSchema]
+        of Object.entries(schema.properties)
+      ) {
+        form.append(createFormField(fieldName, fieldSchema))
+      }
+      this.append(form)
+    } else {
+      for (const [slotName, fieldNames] of Object.entries(structure)) {
+        if (Array.isArray(fieldNames)) {
+          for (const fieldName of fieldNames) {
+            const fieldProps = prepareFieldProps(fieldName)
+            if (fieldProps != null) {
+              this.append(
+                createField(fieldName, { ...fieldProps, slot: slotName })
+              )
+            }
+          }
+        } else {
+          const fieldName = fieldNames
+          const fieldProps = prepareFieldProps(fieldName)
+          if (fieldProps != null) {
+            if (slotName === 'title' && this.href !== '') {
+              fieldProps.href = this.href
+            }
+            this.append(
+              createField(fieldName, { ...fieldProps, slot: slotName })
+            )
+          }
+        }
+      }
+    }
   }
 
   get href (): string {
@@ -159,37 +258,6 @@ export default class Datacard extends HTMLElement {
       this.setAttribute('href', value)
     } else {
       this.removeAttribute('href')
-    }
-  }
-
-  render ({ data, structure, handler } = this): void {
-    if (data == null || structure == null || handler == null) return
-
-    const prepareFieldProps = (fieldName: string): DatacardFieldProps | undefined => {
-      const content = data[fieldName]
-      const fieldProps = handler(content)
-
-      return fieldProps
-    }
-
-    for (const [slotName, fieldNames] of Object.entries(structure)) {
-      if (Array.isArray(fieldNames)) {
-        for (const fieldName of fieldNames) {
-          const fieldProps = prepareFieldProps(fieldName)
-          if (fieldProps != null) {
-            this.append(createField(fieldName, { ...fieldProps, slot: slotName }))
-          }
-        }
-      } else {
-        const fieldName = fieldNames
-        const fieldProps = prepareFieldProps(fieldName)
-        if (fieldProps != null) {
-          if (slotName === 'title' && this.href !== '') {
-            fieldProps.href = this.href
-          }
-          this.append(createField(fieldName, { ...fieldProps, slot: slotName }))
-        }
-      }
     }
   }
 }

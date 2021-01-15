@@ -1,4 +1,4 @@
-interface Link {
+export interface Link {
   pathname?: string
   search?: string
   hash?: string
@@ -25,12 +25,17 @@ export default class Router {
       if (e.altKey || e.ctrlKey || e.shiftKey) return
 
       const link = e.composedPath().find(element => {
-        return (element as HTMLElement)?.tagName === 'A' && (element as Link)?.href
+        switch ((element as HTMLElement).tagName) {
+          case 'A':
+          case 'AREA':
+            return (element as Link).href
+        }
       }) as Link | undefined
 
-      if (link == null) return
-      e.preventDefault()
-      this.go(link)
+      if (link != null) {
+        e.preventDefault()
+        this.go(link)
+      }
     })
   }
 
