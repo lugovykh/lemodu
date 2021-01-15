@@ -212,7 +212,7 @@ export default class Datacard extends HTMLElement {
       return fieldProps
     }
 
-    if (!this.classList.contains('edit')) {
+    if (this.classList.contains('edit')) {
       if (schema == null) return
 
       const form = document.createElement('form')
