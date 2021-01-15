@@ -7,7 +7,7 @@ import Datacard, {
 } from './modules/datacard.js'
 
 const appName = 'noname'
-const router = new Router(['news', 'users', 'about'])
+const router = new Router({ pages: ['news', 'users', 'about'] })
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
 const CSS = `
@@ -136,8 +136,7 @@ class App extends HTMLElement {
       styleSheet.replace(CSS)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    addEventListener('popstate', async () => await this.updateContent())
+    router.callback = async () => await this.updateContent()
     await this.render()
   }
 
@@ -155,7 +154,7 @@ class App extends HTMLElement {
       `${location.pathname.length > 0 ? location.pathname : type}?data`
     )
     const data: Data | Data[] = await dataResponse.json()
-    const schema = await (await fetch(`schemas/${type}.json`)).json()
+    const schema = await (await fetch(`/schemas/${type}.json`)).json()
     const currentContent = this.children.namedItem('content')
     const content = document.createElement('main')
 

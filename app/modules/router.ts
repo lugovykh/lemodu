@@ -9,13 +9,25 @@ interface Params {
 }
 
 export default class Router {
-  #params?: Record<string, Params>
-  pages: Set<string>
-  pathKeys: Set<string>
+  pages?: string[]
+  callback?: (params?: unknown) => void
+  pathKeys?: string[]
 
-  constructor (pages: string[], pathKeys = ['type', 'id']) {
-    this.pages = new Set(pages)
-    this.pathKeys = new Set(pathKeys)
+  #params?: Record<string, Params>
+  #pages?: Set<string>
+  #pathKeys: Set<string>
+
+  constructor ({
+    pages,
+    callback,
+    pathKeys = ['type', 'id']
+  }: Partial<Router>) {
+    this.pages = pages
+    this.callback = callback
+    this.pathKeys = pathKeys
+
+    this.#pages = new Set(pages)
+    this.#pathKeys = new Set(pathKeys)
 
     history.replaceState(
       null, '', `${this.normalizePathname()}${location.search}${location.hash}`
@@ -37,6 +49,8 @@ export default class Router {
         this.go(link)
       }
     })
+
+    addEventListener('popstate', () => this.callback?.())
   }
 
   get params (): Params {
@@ -64,7 +78,7 @@ export default class Router {
     const rawParamsIterator = pathParams.values()
     rawParamsIterator.next()
 
-    for (const key of this.pathKeys) {
+    for (const key of this.#pathKeys) {
       const value = rawParamsIterator.next().value
 
       if (value != null) {
@@ -88,7 +102,7 @@ export default class Router {
     const searchEntries: string[] = []
 
     for (const [key, value] of Object.entries(params)) {
-      if (this.pathKeys.has(key)) {
+      if (this.#pathKeys.has(key)) {
         pathEntries.push(`${value}`)
       } else {
         searchEntries.push(`${key}=${value}`)
@@ -116,6 +130,6 @@ export default class Router {
     }
 
     history.pushState(null, '', uri)
-    dispatchEvent(new PopStateEvent('popstate'))
+    this.callback?.()
   }
 }
