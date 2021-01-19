@@ -2,8 +2,7 @@ import Router from './modules/router.js'
 import Menu from './modules/menu.js'
 import Datacard, {
   DatacardJsonSchemaObject,
-  DatacardStructure,
-  DatacardHandler
+  DatacardStructure
 } from './modules/datacard.js'
 
 const appName = 'noname'
@@ -83,26 +82,6 @@ const datacardStructures: Map<string, DatacardStructure> = new Map()
     content: 'about'
   })
 
-const datacardHandler: DatacardHandler = (rawField) => {
-  if (rawField == null) return null
-  let content: string, href: string | undefined, dateTime: string | undefined
-
-  if (typeof rawField === 'string' && rawField.length === 24 &&
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(rawField)
-  ) {
-    dateTime = rawField
-    content = new Date(rawField).toLocaleString()
-  } else if (typeof rawField === 'string' && rawField.length === 10 &&
-    /^\d{4}-\d{2}-\d{2}$/.test(rawField)
-  ) {
-    dateTime = rawField
-    content = new Date(rawField).toLocaleDateString()
-  } else {
-    content = String(rawField)
-  }
-  return { content, href, dateTime }
-}
-
 function createDatacard (
   data: Data,
   schema: DatacardJsonSchemaObject,
@@ -111,8 +90,7 @@ function createDatacard (
   const datacard = new Datacard({
     data,
     schema,
-    structure: datacardStructures.get(dataType),
-    handler: datacardHandler
+    structure: datacardStructures.get(dataType)
   })
 
   datacard.id = data._id.$oid

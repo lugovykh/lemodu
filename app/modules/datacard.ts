@@ -36,7 +36,17 @@ const CSS = `
     justify-content: space-evenly;
     gap: 1em;
   }
-  #content::slotted(*) {
+  [name$="Meta"]::slotted(span) {
+    display: flex;
+    flex-flow: column;
+    text-align: center;
+    font-size: .8em;
+    color: var(--additional-font-color);
+  }
+  >> .value {
+    font-weight: 600;
+  }
+  #content::slotted(:where(p, div)) {
     text-align: justify;
   }
 `
@@ -48,21 +58,12 @@ template.innerHTML = `
   <slot id="content"></slot>
 `
 
-export interface DatacardFieldProps {
-  content: string
-  dateTime?: string
-  href?: string
-}
-
 export interface DatacardStructure {
   title?: string
   basicMeta?: string | string[]
   extraMeta?: string | string[]
   content: string
 }
-
-export type DatacardHandler =
-  (rawField: unknown) => DatacardFieldProps | null
 
 export type DatacardJsonSchema = {
   type: 'string'
@@ -101,46 +102,91 @@ export function wrapContent<T extends HTMLElement> (
 }
 
 export function createField (
-  name: string,
-  props: DatacardFieldProps & { slot?: string }
-): HTMLElement {
-  const { slot = '', content, dateTime, href } = props
-  let field: HTMLElement | undefined
-  let wrapper: HTMLElement
+  value: string,
+  schema: DatacardJsonSchema,
+  props?: {
+    name?: string
+    label?: string
+    slot?: string
+    href?: string
+  }
+): HTMLElement | string {
+  let field: string | HTMLElement
+  let {
+    label = '',
+    slot = ''
+  } = props ?? {}
+
+  switch (schema.type) {
+    case 'string': {
+      let content: string
+      switch (schema.format) {
+        case 'date-time':
+          content ??= new Date(value).toLocaleString()
+        // eslint-disable-next-line no-fallthrough
+        case 'date':
+          content ??= new Date(value).toLocaleDateString()
+        // eslint-disable-next-line no-fallthrough
+        case 'time': {
+          content ??= new Date(value).toLocaleTimeString()
+
+          const timeElement = document.createElement('time')
+          timeElement.dateTime = value
+          timeElement.textContent = content
+          field = timeElement
+        } break
+        case 'email': {
+          const anchorElement = document.createElement('a')
+          anchorElement.href = `mailto:${value}`
+          anchorElement.textContent = value
+          field = anchorElement
+        }
+      }
+    }
+  }
+  field ??= value
 
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-  if (dateTime) {
-    const timeElement = document.createElement('time')
-    timeElement.dateTime = dateTime
-    field = wrapContent(content, timeElement)
-  }
-  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-  if (href) {
+  if (props?.href) {
     const anchorElement = document.createElement('a')
-    anchorElement.href = href
-    field = wrapContent(field ?? content, anchorElement)
+    anchorElement.href = props.href
+    field = wrapContent(field, anchorElement)
   }
 
-  if (slot === 'title') {
-    const headingElement = document.createElement('h2')
-    wrapper = headingElement
-  } else if (slot.endsWith('Meta')) {
-    const metaElement = new LabeledField()
-    metaElement.label = name
-    wrapper = metaElement
-  } else {
-    wrapper = document.createElement('div')
+  switch (props?.slot) {
+    case 'title':
+      field = wrapContent(field, document.createElement('h2'))
+      label = ''
+      break
+    case 'content':
+      field = wrapContent(field, document.createElement('div'))
+      label = ''
+      slot = ''
+      break
+    default:
+      if (typeof field === 'string') {
+        field = wrapContent(field, document.createElement('span'))
+      }
   }
-  field = wrapContent(field ?? content, wrapper)
 
-  if (slot !== '' && slot !== 'content') field.slot = slot
-  field.className = name
+  if (typeof field !== 'string') {
+    if (label !== '') {
+      field.slot = 'value'
+      const wrapper = new LabeledField()
+      wrapper.append(label, field)
+      field = wrapper
+    }
+
+    if (slot !== '') field.slot = slot
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    if (props?.name) field.classList.add(props.name)
+  }
   return field
 }
 
 export function createFormField (
   name: string,
-  props: DatacardJsonSchema
+  schema: DatacardJsonSchema
 ): DocumentFragment {
   const field = document.createDocumentFragment()
 
@@ -149,13 +195,13 @@ export function createFormField (
   field.append(label)
 
   const input = document.createElement('input')
-  switch (props.type) {
+  switch (schema.type) {
     case 'string':
-      switch (props.format) {
+      switch (schema.format) {
         case 'date':
         case 'time':
         case 'email':
-          input.type = props.format
+          input.type = schema.format
           break
         case 'date-time':
           input.type = 'datetime-local'
@@ -171,13 +217,22 @@ export function createFormField (
   return field
 }
 
+export function createForm (schema: DatacardJsonSchemaObject): HTMLFormElement {
+  const form = document.createElement('form')
+  for (const [fieldName, fieldSchema]
+    of Object.entries(schema.properties)
+  ) {
+    form.append(createFormField(fieldName, fieldSchema))
+  }
+  return form
+}
+
 export default class Datacard extends HTMLElement {
   data?: Record<string, unknown>
   schema?: DatacardJsonSchemaObject
   structure?: DatacardStructure
-  handler?: DatacardHandler
 
-  constructor ({ data, schema, structure, handler }: Partial<Datacard>) {
+  constructor ({ data, schema, structure }: Partial<Datacard>) {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -188,7 +243,6 @@ export default class Datacard extends HTMLElement {
     this.data = data
     this.schema = schema
     this.structure = structure
-    this.handler = handler
   }
 
   connectedCallback (): void {
@@ -200,50 +254,28 @@ export default class Datacard extends HTMLElement {
   }
 
   render (): void {
-    const { data, schema, structure, handler } = this
-    if (data == null || structure == null || handler == null) return
-
-    const prepareFieldProps = (
-      fieldName: string
-    ): DatacardFieldProps | null => {
-      const content = data[fieldName]
-      const fieldProps = handler(content)
-
-      return fieldProps
-    }
+    const { data, schema, structure } = this
+    if (data == null || structure == null || schema == null) return
 
     if (this.classList.contains('edit')) {
-      if (schema == null) return
-
-      const form = document.createElement('form')
-      for (const [fieldName, fieldSchema]
-        of Object.entries(schema.properties)
-      ) {
-        form.append(createFormField(fieldName, fieldSchema))
-      }
-      this.append(form)
+      this.append(createForm(schema))
     } else {
-      for (const [slotName, fieldNames] of Object.entries(structure)) {
+      for (const [slot, fieldNames] of Object.entries(structure)) {
         if (Array.isArray(fieldNames)) {
-          for (const fieldName of fieldNames) {
-            const fieldProps = prepareFieldProps(fieldName)
-            if (fieldProps != null) {
-              this.append(
-                createField(fieldName, { ...fieldProps, slot: slotName })
-              )
-            }
-          }
-        } else {
-          const fieldName = fieldNames
-          const fieldProps = prepareFieldProps(fieldName)
-          if (fieldProps != null) {
-            if (slotName === 'title' && this.href !== '') {
-              fieldProps.href = this.href
-            }
+          for (const name of fieldNames) {
+            const value = String(data[name])
+            const fieldSchema = schema.properties[name]
             this.append(
-              createField(fieldName, { ...fieldProps, slot: slotName })
+              createField(value, fieldSchema, { name, label: name, slot })
             )
           }
+        } else {
+          const name = fieldNames
+          const value = String(data[name])
+          const fieldSchema = schema.properties[name]
+          this.append(
+            createField(value, fieldSchema, { name, label: name, slot })
+          )
         }
       }
     }

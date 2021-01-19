@@ -10,14 +10,14 @@ const CSS = `
     font-size: .8em;
     color: var(--additional-font-color);
   }
-  #content {
+  [name=value] {
     font-weight: 600;
   }
 `
 const template = document.createElement('template')
 template.innerHTML = `
-<span id="label"></span>
-<slot id="content"></slot>
+<slot id="label"></slot>
+<slot name="value"></slot>
 `
 
 export default class LabeledField extends HTMLElement {
@@ -33,26 +33,6 @@ export default class LabeledField extends HTMLElement {
   connectedCallback (): void {
     if (styleSheet.cssRules.length === 0) {
       styleSheet.replace(CSS)
-    }
-
-    this.render()
-  }
-
-  get label (): string {
-    return this.getAttribute('label') ?? ''
-  }
-
-  set label (value: string) {
-    if (value !== '') {
-      this.setAttribute('label', value)
-    } else {
-      this.removeAttribute('label')
-    }
-  }
-
-  render (): void {
-    if (this.label !== '') {
-      this.shadowRoot?.children.namedItem('label')?.append(this.label)
     }
   }
 }
