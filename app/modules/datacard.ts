@@ -49,9 +49,10 @@ template.innerHTML = `
 `
 
 export interface DatacardStructure {
-  title?: string
-  meta?: string | string[]
+  title: string
+  meta: string | string[]
   content: string | string[]
+  [key: string]: string | string[]
 }
 
 export function wrapContent<T extends HTMLElement> (
@@ -188,26 +189,18 @@ export default class Datacard extends HTMLElement {
           href: this.href
         }
       }
-      for (const [slot, fieldNames] of Object.entries(structure)) {
-        if (Array.isArray(fieldNames)) {
-          for (const name of fieldNames) {
-            const value = String(data[name])
-            const fieldSchema = schema.properties[name]
-            this.append(createField(
-              value, fieldSchema, {
-                name, label: name, slot, ...props?.[name]
-              }
-            ))
-          }
-        } else {
-          const name = fieldNames
+      for (const slot in structure) {
+        let fieldNames = structure[slot]
+        if (typeof fieldNames === 'string') {
+          fieldNames = [fieldNames]
+        }
+
+        for (const name of fieldNames) {
           const value = String(data[name])
           const fieldSchema = schema.properties[name]
-          this.append(createField(
-            value, fieldSchema, {
-              name, label: name, slot, ...props?.[name]
-            }
-          ))
+          this.append(createField(value, fieldSchema, {
+            name, label: name, slot, ...props?.[name]
+          }))
         }
       }
     }
