@@ -31,7 +31,7 @@ const CSS = `
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-  [name$="Meta"] {
+  [name="meta"] {
     display: flex;
     flex-flow: row wrap;
     justify-content: space-evenly;
@@ -44,16 +44,14 @@ const CSS = `
 const template = document.createElement('template')
 template.innerHTML = `
   <slot name="title"></slot>
-  <slot name="basicMeta"></slot>
-  <slot name="extraMeta"></slot>
+  <slot name="meta"></slot>
   <slot id="content"></slot>
 `
 
 export interface DatacardStructure {
   title?: string
-  basicMeta?: string | string[]
-  extraMeta?: string | string[]
-  content: string
+  meta?: string | string[]
+  content: string | string[]
 }
 
 export function wrapContent<T extends HTMLElement> (

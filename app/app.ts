@@ -73,12 +73,12 @@ interface Data {
 const datacardStructures: Map<string, DatacardStructure> = new Map()
   .set('news', {
     title: 'title',
-    basicMeta: ['publication_date', 'author'],
+    meta: ['publication_date', 'author'],
     content: 'content'
   })
   .set('users', {
     title: 'nickname',
-    basicMeta: ['first_name', 'last_name', 'birth_date'],
+    meta: ['first_name', 'last_name', 'birth_date'],
     content: 'about'
   })
 
