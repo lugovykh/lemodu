@@ -81,7 +81,6 @@ export function createField (
     label = '',
     slot = ''
   } = props ?? {}
-  console.log(props)
 
   switch (schema.type) {
     case 'string': {
