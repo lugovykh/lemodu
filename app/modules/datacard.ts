@@ -77,10 +77,7 @@ export function createField (
   props?: FieldProps
 ): HTMLElement | string {
   let field: string | HTMLElement
-  let {
-    label = '',
-    slot = ''
-  } = props ?? {}
+  let { label = '', slot = '' } = props ?? {}
 
   switch (schema.type) {
     case 'string': {
@@ -95,16 +92,16 @@ export function createField (
         case 'time': {
           content ??= new Date(value).toLocaleTimeString()
 
-          const timeElement = document.createElement('time')
-          timeElement.dateTime = value
-          timeElement.textContent = content
-          field = timeElement
+          const timeWrapper = document.createElement('time')
+          timeWrapper.dateTime = value
+          timeWrapper.textContent = content
+          field = timeWrapper
         } break
         case 'email': {
-          const anchorElement = document.createElement('a')
-          anchorElement.href = `mailto:${value}`
-          anchorElement.textContent = value
-          field = anchorElement
+          const anchorWrapper = document.createElement('a')
+          anchorWrapper.href = `mailto:${value}`
+          anchorWrapper.textContent = value
+          field = anchorWrapper
         }
       }
     }
@@ -113,9 +110,9 @@ export function createField (
 
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   if (props?.href) {
-    const anchorElement = document.createElement('a')
-    anchorElement.href = props.href
-    field = wrapContent(field, anchorElement)
+    const anchorWrapper = document.createElement('a')
+    anchorWrapper.href = props.href
+    field = wrapContent(field, anchorWrapper)
   }
 
   switch (props?.slot) {

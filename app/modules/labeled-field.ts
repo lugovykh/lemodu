@@ -16,8 +16,8 @@ const CSS = `
 `
 const template = document.createElement('template')
 template.innerHTML = `
-<slot id="label"></slot>
-<slot name="value"></slot>
+  <slot id="label"></slot>
+  <slot name="value"></slot>
 `
 
 export default class LabeledField extends HTMLElement {
