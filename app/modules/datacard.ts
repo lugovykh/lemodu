@@ -37,16 +37,6 @@ const CSS = `
     justify-content: space-evenly;
     gap: 1em;
   }
-  [name$="Meta"]::slotted(span) {
-    display: flex;
-    flex-flow: column;
-    text-align: center;
-    font-size: .8em;
-    color: var(--additional-font-color);
-  }
-  >> .value {
-    font-weight: 600;
-  }
   #content::slotted(:where(p, div)) {
     text-align: justify;
   }
