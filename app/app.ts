@@ -1,9 +1,9 @@
 import Router from './modules/router.js'
 import Menu from './modules/menu.js'
 import Datacard, {
-  DatacardJsonSchemaObject,
   DatacardStructure
 } from './modules/datacard.js'
+import type { JsonSchemaObject } from './modules/json-schema'
 
 const appName = 'noname'
 const router = new Router({ pages: ['news', 'users', 'about'] })
@@ -84,7 +84,7 @@ const datacardStructures: Map<string, DatacardStructure> = new Map()
 
 function createDatacard (
   data: Data,
-  schema: DatacardJsonSchemaObject,
+  schema: JsonSchemaObject,
   dataType: string
 ): Datacard {
   const datacard = new Datacard({

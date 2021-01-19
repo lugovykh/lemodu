@@ -1,4 +1,5 @@
 import LabeledField from './labeled-field.js'
+import type { JsonSchema, JsonSchemaObject } from './json-schema'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
@@ -65,32 +66,6 @@ export interface DatacardStructure {
   content: string
 }
 
-export type DatacardJsonSchema = {
-  type: 'string'
-  minLength?: number
-  maxLength?: number
-  pattern?: string
-  format?:
-  | 'date-time'
-  | 'time'
-  | 'date'
-  | 'email'
-} | {
-  type: 'number'
-} | (
-  { type: 'object' } &
-  DatacardJsonSchemaObject
-) | {
-  type: 'array'
-} | {
-  type: 'boolean'
-} | {
-  type: 'null'
-}
-export interface DatacardJsonSchemaObject {
-  properties: Record<string, DatacardJsonSchema>
-}
-
 export function wrapContent<T extends HTMLElement> (
   field: string | T,
   wrapper: T
@@ -103,7 +78,7 @@ export function wrapContent<T extends HTMLElement> (
 
 export function createField (
   value: string,
-  schema: DatacardJsonSchema,
+  schema: JsonSchema,
   props?: {
     name?: string
     label?: string
@@ -184,52 +159,9 @@ export function createField (
   return field
 }
 
-export function createFormField (
-  name: string,
-  schema: DatacardJsonSchema
-): DocumentFragment {
-  const field = document.createDocumentFragment()
-
-  const label = document.createElement('label')
-  label.textContent = name
-  field.append(label)
-
-  const input = document.createElement('input')
-  switch (schema.type) {
-    case 'string':
-      switch (schema.format) {
-        case 'date':
-        case 'time':
-        case 'email':
-          input.type = schema.format
-          break
-        case 'date-time':
-          input.type = 'datetime-local'
-          break
-
-        default:
-          input.type = 'text'
-      }
-      break
-  }
-  field.append(input)
-
-  return field
-}
-
-export function createForm (schema: DatacardJsonSchemaObject): HTMLFormElement {
-  const form = document.createElement('form')
-  for (const [fieldName, fieldSchema]
-    of Object.entries(schema.properties)
-  ) {
-    form.append(createFormField(fieldName, fieldSchema))
-  }
-  return form
-}
-
 export default class Datacard extends HTMLElement {
   data?: Record<string, unknown>
-  schema?: DatacardJsonSchemaObject
+  schema?: JsonSchemaObject
   structure?: DatacardStructure
 
   constructor ({ data, schema, structure }: Partial<Datacard>) {
@@ -245,19 +177,20 @@ export default class Datacard extends HTMLElement {
     this.structure = structure
   }
 
-  connectedCallback (): void {
+  async connectedCallback (): Promise<void> {
     if (styleSheet.cssRules.length === 0) {
       styleSheet.replace(CSS)
     }
 
-    this.render()
+    await this.render()
   }
 
-  render (): void {
+  async render (): Promise<void> {
     const { data, schema, structure } = this
     if (data == null || structure == null || schema == null) return
 
     if (this.classList.contains('edit')) {
+      const { createForm } = await import('./create-form.js')
       this.append(createForm(schema))
     } else {
       for (const [slot, fieldNames] of Object.entries(structure)) {
