@@ -17,7 +17,7 @@ const CSS = `
     box-shadow: var(--main-box-shadow);
     filter: drop-shadow(var(--content-drop-shadow));
   }
-  ::slotted(*) {
+  ::slotted(:not(:last-child)) {
     margin: 0 0 1em;
   }
   ::slotted(h2) {
