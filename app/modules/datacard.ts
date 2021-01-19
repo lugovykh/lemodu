@@ -27,7 +27,7 @@ const CSS = `
     font-size: 1.2em;
     font-weight: 600;
     font-variant: small-caps;
-    color: var(--titel-font-color);
+    color: var(--title-font-color);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -76,21 +76,24 @@ export function wrapContent<T extends HTMLElement> (
   return wrapper
 }
 
+export interface FieldProps {
+  name?: string
+  label?: string
+  slot?: string
+  href?: string
+}
+
 export function createField (
   value: string,
   schema: JsonSchema,
-  props?: {
-    name?: string
-    label?: string
-    slot?: string
-    href?: string
-  }
+  props?: FieldProps
 ): HTMLElement | string {
   let field: string | HTMLElement
   let {
     label = '',
     slot = ''
   } = props ?? {}
+  console.log(props)
 
   switch (schema.type) {
     case 'string': {
@@ -163,6 +166,7 @@ export default class Datacard extends HTMLElement {
   data?: Record<string, unknown>
   schema?: JsonSchemaObject
   structure?: DatacardStructure
+  href?: string
 
   constructor ({ data, schema, structure }: Partial<Datacard>) {
     super()
@@ -193,36 +197,35 @@ export default class Datacard extends HTMLElement {
       const { createForm } = await import('./create-form.js')
       this.append(createForm(schema))
     } else {
+      const props: Record<string, FieldProps> = {}
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      if (this.href && structure?.title != null) {
+        props[structure.title] = {
+          href: this.href
+        }
+      }
       for (const [slot, fieldNames] of Object.entries(structure)) {
         if (Array.isArray(fieldNames)) {
           for (const name of fieldNames) {
             const value = String(data[name])
             const fieldSchema = schema.properties[name]
-            this.append(
-              createField(value, fieldSchema, { name, label: name, slot })
-            )
+            this.append(createField(
+              value, fieldSchema, {
+                name, label: name, slot, ...props?.[name]
+              }
+            ))
           }
         } else {
           const name = fieldNames
           const value = String(data[name])
           const fieldSchema = schema.properties[name]
-          this.append(
-            createField(value, fieldSchema, { name, label: name, slot })
-          )
+          this.append(createField(
+            value, fieldSchema, {
+              name, label: name, slot, ...props?.[name]
+            }
+          ))
         }
       }
-    }
-  }
-
-  get href (): string {
-    return this.getAttribute('href') ?? ''
-  }
-
-  set href (value: string) {
-    if (value !== '') {
-      this.setAttribute('href', value)
-    } else {
-      this.removeAttribute('href')
     }
   }
 }
