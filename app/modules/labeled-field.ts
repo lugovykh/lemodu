@@ -21,13 +21,18 @@ template.innerHTML = `
 `
 
 export default class LabeledField extends HTMLElement {
-  constructor () {
+  constructor (label: string, value: HTMLElement) {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shadow: any = this.attachShadow({ mode: 'open' })
     shadow.adoptedStyleSheets = [styleSheet]
     shadow.append(template.content.cloneNode(true))
+
+    if (value != null) {
+      value.slot = 'value'
+      this.append(label ?? '', value)
+    }
   }
 
   connectedCallback (): void {

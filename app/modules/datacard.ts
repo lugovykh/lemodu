@@ -134,10 +134,7 @@ export function createField (
 
   if (typeof field !== 'string') {
     if (label !== '') {
-      field.slot = 'value'
-      const labeledField = new LabeledField()
-      labeledField.append(label, field)
-      field = labeledField
+      field = new LabeledField(label, field)
     }
 
     if (slot !== '') field.slot = slot
