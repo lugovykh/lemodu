@@ -10,7 +10,7 @@ interface Params {
 
 export default class Router {
   pages?: string[]
-  callback?: (params?: unknown) => void
+  handler?: (params?: Record<string, unknown>) => void
   pathKeys?: string[]
 
   #params?: Record<string, Params>
@@ -19,18 +19,18 @@ export default class Router {
 
   constructor ({
     pages,
-    callback,
+    handler,
     pathKeys = ['type', 'id']
   }: Partial<Router>) {
     this.pages = pages
-    this.callback = callback
+    this.handler = handler
     this.pathKeys = pathKeys
 
     this.#pages = new Set(pages)
     this.#pathKeys = new Set(pathKeys)
 
     history.replaceState(
-      null, '', `${this.normalizePathname()}${location.search}${location.hash}`
+      null, '', `${this.trimPathname()}${location.search}${location.hash}`
     )
 
     addEventListener('click', e => {
@@ -50,7 +50,7 @@ export default class Router {
       }
     })
 
-    addEventListener('popstate', () => this.callback?.())
+    addEventListener('popstate', () => this.handler?.())
   }
 
   get params (): Params {
@@ -65,16 +65,17 @@ export default class Router {
     return params
   }
 
-  normalizePathname (pathname = location.pathname): string {
+  trimPathname (pathname = location.pathname): string {
     if (pathname.length > 2 && pathname.endsWith('/')) {
       return pathname.slice(0, -1)
+    } else {
+      return pathname
     }
-    return pathname
   }
 
   getParams ({ pathname, search }: Link = location): Params {
     const params: Params = {}
-    const pathParams = this.normalizePathname(pathname).split('/')
+    const pathParams = this.trimPathname(pathname).split('/')
     const rawParamsIterator = pathParams.values()
     rawParamsIterator.next()
 
@@ -123,13 +124,13 @@ export default class Router {
         search === location.search &&
         hash === location.hash
       ) return
-      uri = `${this.normalizePathname(pathname)}${search ?? ''}${hash ?? ''}`
+      uri = `${this.trimPathname(pathname)}${search ?? ''}${hash ?? ''}`
     } else if (link?.href != null) {
       uri = link.href
       if (uri === location.href) return
     }
 
     history.pushState(null, '', uri)
-    this.callback?.()
+    this.handler?.()
   }
 }
