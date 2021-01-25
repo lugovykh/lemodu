@@ -6,7 +6,6 @@ import Datacard, {
 import type { JsonSchemaObject } from './modules/json-schema'
 
 const appName = 'noname'
-const router = new Router({ pages: ['news', 'users', 'about'] })
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
 const CSS = `
@@ -70,6 +69,8 @@ interface Data {
   [key: string]: unknown
 }
 
+let router: Router
+
 const datacardStructures: Map<string, DatacardStructure> = new Map()
   .set('news', {
     title: 'title',
@@ -114,7 +115,10 @@ class App extends HTMLElement {
       styleSheet.replace(CSS)
     }
 
-    router.callback = async () => await this.updateContent()
+    router = new Router({
+      pages: ['news', 'users', 'about'],
+      handler: this.updateContent.bind(this)
+    })
     await this.render()
   }
 
