@@ -188,7 +188,7 @@ export default class Datacard extends HTMLElement {
       }
       for (const slot in structure) {
         let fieldNames = structure[slot]
-        if (typeof fieldNames === 'string') {
+        if (!Array.isArray(fieldNames)) {
           fieldNames = [fieldNames]
         }
 
