@@ -8,26 +8,33 @@ interface Params {
   [key: string]: string
 }
 
+interface PageData {
+  title: string
+  default: () => Record<string, Element>
+}
+
 export default class Router {
-  pages?: string[]
-  handler?: (params?: Record<string, unknown>) => void
+  routes?: string[]
   pathKeys?: string[]
+  handler?: (routeContent: PageData) => void
 
   #params?: Record<string, Params>
-  #pages?: Set<string>
+  #routes?: Set<string>
   #pathKeys: Set<string>
+  #handler: () => void
 
   constructor ({
-    pages,
-    handler,
-    pathKeys = ['type', 'id']
+    routes,
+    pathKeys = ['type', 'id'],
+    handler
   }: Partial<Router>) {
-    this.pages = pages
-    this.handler = handler
+    this.routes = routes
     this.pathKeys = pathKeys
+    this.handler = handler
 
-    this.#pages = new Set(pages)
+    this.#routes = new Set(routes)
     this.#pathKeys = new Set(pathKeys)
+    this.#handler = async () => this.handler?.(await this.getRouteData())
 
     history.replaceState(
       null, '', `${this.trimPathname()}${location.search}${location.hash}`
@@ -42,15 +49,18 @@ export default class Router {
           case 'AREA':
             return (element as Link).href
         }
-      }) as Link | undefined
+        return false
+      })
 
       if (link != null) {
         e.preventDefault()
-        this.go(link)
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.go(link as Link)
       }
     })
 
-    addEventListener('popstate', () => this.handler?.())
+    addEventListener('popstate', () => this.#handler())
+    this.#handler()
   }
 
   get params (): Params {
@@ -98,6 +108,13 @@ export default class Router {
     return params
   }
 
+  async getRouteData (uri = location): Promise<PageData> {
+    const routeParams = this.getParams(uri)
+    const routeData = await import(`../pages/${routeParams.type}.js`)
+
+    return routeData
+  }
+
   generateUri (params: Params): string {
     const pathEntries: string[] = []
     const searchEntries: string[] = []
@@ -113,8 +130,8 @@ export default class Router {
       `${searchEntries.length > 0 ? searchEntries.join('&') : ''}`
   }
 
-  go (link: Link | string): void {
-    let uri: string | undefined
+  async go (link: Link | string): Promise<void> {
+    let uri: string
 
     if (typeof link === 'string') {
       uri = link
@@ -128,9 +145,11 @@ export default class Router {
     } else if (link?.href != null) {
       uri = link.href
       if (uri === location.href) return
+    } else {
+      uri = ''
     }
 
+    this.#handler()
     history.pushState(null, '', uri)
-    this.handler?.()
   }
 }

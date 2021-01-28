@@ -1,9 +1,5 @@
 import Router from './modules/router.js'
 import Menu from './modules/menu.js'
-import Datacard, {
-  DatacardStructure
-} from './modules/datacard.js'
-import type { JsonSchemaObject } from './modules/json-schema'
 
 const appName = 'noname'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,43 +60,31 @@ template.innerHTML = `
   <slot id="content"></slot>
 `
 
-interface Data {
-  _id: { $oid: string }
-  [key: string]: unknown
+interface PageStructure {
+  content: string[]
+  [key: string]: string[]
 }
+
+interface PageData {
+  title: string
+  structure: PageStructure
+  default: (routeParams: unknown) => Record<string, Element>
+}
+
+// const datacardStructures: Map<string, unknown> = new Map()
+//   .set('users', {
+//     title: 'nickname',
+//     meta: ['first_name', 'last_name', 'birth_date'],
+//     content: 'about'
+//   })
 
 let router: Router
-
-const datacardStructures: Map<string, DatacardStructure> = new Map()
-  .set('news', {
-    title: 'title',
-    meta: ['publication_date', 'author'],
-    content: 'content'
-  })
-  .set('users', {
-    title: 'nickname',
-    meta: ['first_name', 'last_name', 'birth_date'],
-    content: 'about'
-  })
-
-function createDatacard (
-  data: Data,
-  schema: JsonSchemaObject,
-  dataType: string
-): Datacard {
-  const datacard = new Datacard({
-    data,
-    schema,
-    structure: datacardStructures.get(dataType)
-  })
-
-  datacard.id = data._id.$oid
-  datacard.href = router.generateUri({ type: dataType, id: data._id.$oid })
-
-  return datacard
-}
+let pageContent: Record<string, Element>
+let currentChildren: Set<Element>
 
 class App extends HTMLElement {
+  structure: PageStructure
+
   constructor () {
     super()
 
@@ -108,6 +92,10 @@ class App extends HTMLElement {
     const shadow: any = this.attachShadow({ mode: 'open' })
     shadow.adoptedStyleSheets = [styleSheet]
     shadow.append(template.content.cloneNode(true))
+
+    this.structure = {
+      content: []
+    }
   }
 
   async connectedCallback (): Promise<void> {
@@ -115,50 +103,50 @@ class App extends HTMLElement {
       styleSheet.replace(CSS)
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     router = new Router({
-      pages: ['news', 'users', 'about'],
-      handler: this.updateContent.bind(this)
+      routes: ['news', 'users', 'about'],
+      handler: async (pageData: Partial<PageData>) => {
+        pageContent = await pageData.default?.(router.params) ?? {}
+        this.structure = { ...this.structure, ...pageData.structure }
+
+        await this.render()
+      }
     })
-    await this.render()
   }
 
   async render (): Promise<void> {
+    const { structure } = this
+    currentChildren = new Set(this.children)
+
     const mainMenu = new Menu()
     mainMenu.slot = 'mainMenu'
     this.append(mainMenu)
 
-    await this.updateContent()
-  }
+    for (const slot in structure) {
+      const contentIds = structure[slot]
 
-  async updateContent (): Promise<void> {
-    const { type = 'news' } = router.params
-    const dataResponse = await fetch(
-      `${location.pathname.length > 0 ? location.pathname : type}?data`
-    )
-    const data: Data | Data[] = await dataResponse.json()
-    const schema = await (await fetch(`/schemas/${type}.json`)).json()
-    const currentContent = this.children.namedItem('content')
-    const content = document.createElement('main')
+      for (const id of contentIds) {
+        const currentChild = this.children.namedItem(id)
+        const newChild = pageContent[id]
+        newChild.id = id
 
-    if (Array.isArray(data)) {
-      for (const entry of data) {
-        const contentItem = createDatacard(entry, schema, type)
-        content.append(contentItem)
+        if (currentChild != null) {
+          if (currentChild === newChild) return
+
+          currentChildren.delete(currentChild)
+          currentChild.replaceWith(newChild)
+        } else {
+          this.append(newChild)
+        }
       }
-      content.classList.add('collection')
-    } else {
-      content.append(createDatacard(data, schema, type))
-      content.classList.remove('collection')
     }
 
-    content.id = 'content'
-    if (currentContent !== null) {
-      currentContent.replaceWith(content)
-    } else {
-      this.append(content)
+    for (const unnecessary of currentChildren) {
+      unnecessary.remove()
     }
 
-    document.title = `${type} | ${appName}`
+    document.title = `${'pageTitle'} | ${appName}`
     sessionStorage.setItem('pageTitle', document.title)
   }
 }
