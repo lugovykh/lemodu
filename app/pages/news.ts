@@ -1,5 +1,6 @@
 import Datacard, {
-  DatacardStructure
+  DatacardStructure,
+  JsonSchemaObject
 } from '../modules/datacard.js'
 
 interface Data {
@@ -20,6 +21,7 @@ interface PageStructure {
 export let title = 'News'
 export const type = 'news'
 const schemaResponse = fetch(`/schemas/${type}.json`)
+let schema: JsonSchemaObject
 
 const datacardStructure: DatacardStructure = {
   title: 'title',
@@ -41,7 +43,7 @@ export default async function render (
     '?data'
   )
   const data: Data | Data[] = await dataResponse.json()
-  const schema = await (await schemaResponse).json()
+  schema ??= await (await schemaResponse).json()
   let content: HTMLElement
 
   if (Array.isArray(data)) {
@@ -54,6 +56,7 @@ export default async function render (
         schema,
         structure: datacardStructure
       })
+      contentItem.href = `${type}/${entry._id.$oid}`
       contentItem.id = entry._id.$oid
       content.append(contentItem)
     }

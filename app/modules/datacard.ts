@@ -1,6 +1,8 @@
 import LabeledField from './labeled-field.js'
 import type { JsonSchema, JsonSchemaObject } from './json-schema'
 
+export type { JsonSchemaObject } from './json-schema'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
 const CSS = `
@@ -9,6 +11,9 @@ const CSS = `
     display: flex;
     flex-flow: column;
     box-sizing: border-box;
+    width: clamp(320px, 100%, 800px);
+    height: fit-content;
+    justify-self: center;
     padding: 1em 2em;
     color: var(--content-font-color);
     background-color: var(--content-background-color);

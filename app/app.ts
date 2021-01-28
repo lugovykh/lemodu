@@ -13,6 +13,7 @@ const CSS = `
       "content"
       "footer";
     grid-template-rows: auto 1fr auto;
+    gap: 2em;
     font-family: var(--main-font-family);
     color: var(--main-font-color);
     background-color: var(--additional-background-color);
@@ -36,8 +37,7 @@ const CSS = `
   #content::slotted(main) {
     grid-area: content;
     display: grid;
-    grid: auto / minmax(320px, 800px);
-    padding: 2em;
+    grid: auto / minmax(200px, 800px);
     justify-content: center;
     align-content: start;
   }
