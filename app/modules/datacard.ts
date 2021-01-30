@@ -10,6 +10,7 @@ const CSS = `
     overflow: hidden;
     display: flex;
     flex-flow: column;
+    gap: 1em;
     box-sizing: border-box;
     width: clamp(320px, 100%, 800px);
     height: fit-content;
@@ -21,9 +22,6 @@ const CSS = `
     border-radius: var(--main-border-radius);
     box-shadow: var(--main-box-shadow);
     filter: drop-shadow(var(--content-drop-shadow));
-  }
-  ::slotted(:not(:last-child)) {
-    margin: 0 0 1em;
   }
   ::slotted(h2) {
     max-width: 100%;
