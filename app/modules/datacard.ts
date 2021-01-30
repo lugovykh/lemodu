@@ -1,7 +1,7 @@
 import LabeledField from './labeled-field.js'
-import type { JsonSchema, JsonSchemaObject } from './json-schema'
+import type { JsonSchema, JsonSchemaObject } from '../schemas/json-schema'
 
-export type { JsonSchemaObject } from './json-schema'
+export type { JsonSchemaObject } from '../schemas/json-schema'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
