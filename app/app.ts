@@ -1,10 +1,11 @@
 import Router from './modules/router.js'
+
+import Header from './modules/header.js'
 import Menu from './modules/menu.js'
 
-const appName = 'noname'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
-const CSS = `
+const styles = `
   :host {
     position: relative;
     display: grid;
@@ -17,22 +18,6 @@ const CSS = `
     font-family: var(--main-font-family);
     color: var(--main-font-color);
     background-color: var(--additional-background-color);
-  }
-  header {
-    grid-area: header;
-    display: flex;
-    flex-flow: row;
-    position: sticky;
-    z-index: 100;
-    top: 0;
-    background-color: var(--main-background-color);
-    backdrop-filter: blur(var(--main-blur));
-    border-bottom: var(--main-border);
-    box-shadow: var(--main-box-shadow);
-    filter: drop-shadow(var(--main-drop-shadow));
-  }
-  header ::slotted(*) {
-    margin: 0 auto;
   }
   #content::slotted(main) {
     grid-area: content;
@@ -54,36 +39,39 @@ const CSS = `
 `
 const template = document.createElement('template')
 template.innerHTML = `
-  <header>
-    <slot name="mainMenu"></slot>
-  </header>
+  <slot name="header"></slot>
   <slot id="content"></slot>
 `
 
-interface PageStructure {
-  content: string[]
-  [key: string]: string[]
+interface AppStructure {
+  [section: string]: SectionStructure
 }
 
-interface PageData {
+interface SectionStructure {
+  [slot: string]: Element[]
+}
+
+export interface Page {
   title: string
   structure: PageStructure
-  default: (routeParams: unknown) => Record<string, Element>
+  setParams: (params: unknown) => Promise<void>
 }
 
-// const datacardStructures: Map<string, unknown> = new Map()
-//   .set('users', {
-//     title: 'nickname',
-//     meta: ['first_name', 'last_name', 'birth_date'],
-//     content: 'about'
-//   })
+export interface PageStructure {
+  [slot: string]: Element[]
+}
 
 let router: Router
-let pageContent: Record<string, Element>
-let currentChildren: Set<Element>
+const appStructure: AppStructure = {
+  header: {},
+  main: {}
+}
+
+const appName = 'Noname'
 
 class App extends HTMLElement {
-  structure: PageStructure
+  structure: AppStructure
+  #currentStructure?: AppStructure
 
   constructor () {
     super()
@@ -93,22 +81,23 @@ class App extends HTMLElement {
     shadow.adoptedStyleSheets = [styleSheet]
     shadow.append(template.content.cloneNode(true))
 
-    this.structure = {
-      content: []
-    }
+    this.structure = appStructure
   }
 
   async connectedCallback (): Promise<void> {
     if (styleSheet.cssRules.length === 0) {
-      styleSheet.replace(CSS)
+      styleSheet.replaceSync(styles)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     router = new Router({
       routes: ['news', 'users', 'about'],
-      handler: async (pageData: Partial<PageData>) => {
-        pageContent = await pageData.default?.(router.params) ?? {}
-        this.structure = { ...this.structure, ...pageData.structure }
+      handler: async (page: Page) => {
+        await page.setParams(router.params)
+        this.structure.main = { ...appStructure.main, ...page.structure }
+
+        document.title = `${page.title} | ${appName}`
+        sessionStorage.setItem('pageTitle', document.title)
 
         await this.render()
       }
@@ -117,37 +106,34 @@ class App extends HTMLElement {
 
   async render (): Promise<void> {
     const { structure } = this
-    currentChildren = new Set(this.children)
 
-    const mainMenu = new Menu()
-    mainMenu.slot = 'mainMenu'
-    this.append(mainMenu)
+    for (const id in appStructure) {
+      const currentSectionStructure = this.#currentStructure?.[id]
+      const sectionStructure = structure[id]
+      let section = this.children.namedItem(id)
 
-    for (const slot in structure) {
-      const contentIds = structure[slot]
+      if (section == null) {
+        switch (id) {
+          case 'header':
+            section = new Header()
+            break
+          default:
+            section = document.createElement('main')
+            break
+        }
+        section.id = id
+        this.append(section)
+      }
 
-      for (const id of contentIds) {
-        const currentChild = this.children.namedItem(id)
-        const newChild = pageContent[id]
-        newChild.id = id
+      if (sectionStructure !== currentSectionStructure) {
+        section.textContent = ''
 
-        if (currentChild != null) {
-          if (currentChild === newChild) return
-
-          currentChildren.delete(currentChild)
-          currentChild.replaceWith(newChild)
-        } else {
-          this.append(newChild)
+        for (const slot in sectionStructure) {
+          section.append(...sectionStructure[slot])
         }
       }
     }
-
-    for (const unnecessary of currentChildren) {
-      unnecessary.remove()
-    }
-
-    document.title = `${'pageTitle'} | ${appName}`
-    sessionStorage.setItem('pageTitle', document.title)
+    this.#currentStructure = { ...structure }
   }
 }
 

@@ -1,3 +1,5 @@
+import type { Page } from '../app'
+
 export interface Link {
   pathname?: string
   search?: string
@@ -8,15 +10,10 @@ interface Params {
   [key: string]: string
 }
 
-interface PageData {
-  title: string
-  default: () => Record<string, Element>
-}
-
 export default class Router {
   routes?: string[]
   pathKeys?: string[]
-  handler?: (routeContent: PageData) => void
+  handler?: (routeContent: Page) => Promise<void>
 
   #params?: Record<string, Params>
   #routes?: Set<string>
@@ -34,7 +31,7 @@ export default class Router {
 
     this.#routes = new Set(routes)
     this.#pathKeys = new Set(pathKeys)
-    this.#handler = async () => this.handler?.(await this.getRouteData())
+    this.#handler = async () => await this.handler?.(await this.getRouteData())
 
     history.replaceState(
       null, '', `${this.trimPathname()}${location.search}${location.hash}`
@@ -108,7 +105,7 @@ export default class Router {
     return params
   }
 
-  async getRouteData (uri = location): Promise<PageData> {
+  async getRouteData (uri = location): Promise<Page> {
     const routeParams = this.getParams(uri)
     const routeData = await import(`../pages/${routeParams.type}.js`)
 

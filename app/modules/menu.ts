@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
-const CSS = `
+const styles = `
   :host {
     display: flex;
     line-height: 1.5;
@@ -31,7 +31,7 @@ export default class Menu extends HTMLElement {
 
   connectedCallback (): void {
     if (styleSheet.cssRules.length === 0) {
-      styleSheet.replace(CSS)
+      styleSheet.replaceSync(styles)
     }
 
     this.render()

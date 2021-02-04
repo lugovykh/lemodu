@@ -2,37 +2,35 @@
 const styleSheet: any = new CSSStyleSheet()
 const styles = `
   :host {
+    grid-area: header;
     display: flex;
-    flex-flow: column;
-    text-align: center;
+    flex-flow: row;
+    position: sticky;
+    z-index: 100;
+    top: 0;
+    background-color: var(--main-background-color);
+    backdrop-filter: blur(var(--main-blur));
+    border-bottom: var(--main-border);
+    box-shadow: var(--main-box-shadow);
+    filter: drop-shadow(var(--main-drop-shadow));
   }
-  #label {
-    font-size: .8em;
-    color: var(--additional-font-color);
-  }
-  [name=value] {
-    font-weight: 600;
+  ::slotted(*) {
+    margin: 0 auto;
   }
 `
 const template = document.createElement('template')
 template.innerHTML = `
-  <slot id="label"></slot>
-  <slot name="value"></slot>
+  <slot></slot>
 `
 
-export default class LabeledField extends HTMLElement {
-  constructor (label: string, value: HTMLElement) {
+export default class Header extends HTMLElement {
+  constructor () {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shadow: any = this.attachShadow({ mode: 'open' })
     shadow.adoptedStyleSheets = [styleSheet]
     shadow.append(template.content.cloneNode(true))
-
-    if (value != null) {
-      value.slot = 'value'
-      this.append(label ?? '', value)
-    }
   }
 
   connectedCallback (): void {
@@ -42,4 +40,4 @@ export default class LabeledField extends HTMLElement {
   }
 }
 
-customElements.define('app-labeled-field', LabeledField)
+customElements.define('app-header', Header)

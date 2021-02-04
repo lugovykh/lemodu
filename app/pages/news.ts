@@ -1,3 +1,5 @@
+import type { PageStructure } from '../app'
+
 import Datacard, {
   DatacardStructure,
   JsonSchemaObject
@@ -12,13 +14,7 @@ interface PageParams {
   id: string
 }
 
-interface PageStructure {
-  header?: string[]
-  content: string[]
-  footer?: string[]
-}
-
-export let title = 'News'
+export let title = ''
 export const type = 'news'
 const schemaResponse = fetch(`/schemas/${type}.json`)
 let schema: JsonSchemaObject
@@ -29,14 +25,12 @@ const datacardStructure: DatacardStructure = {
   content: 'content'
 }
 
-export const structure: PageStructure = {
-  content: ['content']
-}
+export let structure: PageStructure
 
-export default async function render (
-  routeParams: PageParams
-): Promise<Record<string, HTMLElement>> {
-  const { id = '' } = routeParams
+export async function setParams (
+  pageParams: PageParams
+): Promise<void> {
+  const { id = '' } = pageParams
   const dataResponse = await fetch(
     `/${type}` +
     (id !== '' ? `/${id}` : '') +
@@ -47,7 +41,7 @@ export default async function render (
   let content: HTMLElement
 
   if (Array.isArray(data)) {
-    content = document.createElement('main')
+    content = document.createElement('div')
     content.classList.add('collection')
 
     for (const entry of data) {
@@ -56,18 +50,19 @@ export default async function render (
         schema,
         structure: datacardStructure
       })
-      contentItem.href = `${type}/${entry._id.$oid}`
+      contentItem.href = `/${type}/${entry._id.$oid}`
       contentItem.id = entry._id.$oid
       content.append(contentItem)
     }
+    title = 'News'
   } else {
     content = new Datacard({
       data,
       schema,
       structure: datacardStructure
     })
-    title = `${String(data.title)} :: ${title}`
+    title = String(data.title)
   }
 
-  return { content }
+  structure = { content: [content] }
 }

@@ -5,7 +5,7 @@ export type { JsonSchemaObject } from '../schemas/json-schema'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
-const CSS = `
+const styles = `
   :host {
     overflow: hidden;
     display: flex;
@@ -81,7 +81,7 @@ export function createField (
   props?: FieldProps
 ): HTMLElement | string {
   let field: string | HTMLElement
-  let { label = '', slot = '' } = props ?? {}
+  let { name = '', label = '', slot = '', href = '' } = props ?? {}
 
   switch (schema.type) {
     case 'string': {
@@ -112,14 +112,13 @@ export function createField (
   }
   field ??= value
 
-  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-  if (props?.href) {
+  if (href !== '') {
     const anchorWrapper = document.createElement('a')
-    anchorWrapper.href = props.href
+    anchorWrapper.href = href
     field = wrapContent(field, anchorWrapper)
   }
 
-  switch (props?.slot) {
+  switch (slot) {
     case 'title':
       field = wrapContent(field, document.createElement('h2'))
       label = ''
@@ -135,15 +134,10 @@ export function createField (
       }
   }
 
-  if (typeof field !== 'string') {
-    if (label !== '') {
-      field = new LabeledField(label, field)
-    }
+  if (label !== '')field = new LabeledField(label, field)
+  if (slot !== '') field.slot = slot
+  if (name !== '') field.classList.add(name)
 
-    if (slot !== '') field.slot = slot
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (props?.name) field.classList.add(props.name)
-  }
   return field
 }
 
@@ -168,7 +162,7 @@ export default class Datacard extends HTMLElement {
 
   async connectedCallback (): Promise<void> {
     if (styleSheet.cssRules.length === 0) {
-      styleSheet.replace(CSS)
+      styleSheet.replaceSync(styles)
     }
 
     await this.render()
