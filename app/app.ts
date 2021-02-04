@@ -62,10 +62,7 @@ export interface PageStructure {
 }
 
 let router: Router
-const appStructure: AppStructure = {
-  header: {},
-  main: {}
-}
+const appStructure: AppStructure = {}
 
 const appName = 'Noname'
 
