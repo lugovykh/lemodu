@@ -18,7 +18,7 @@ export default class Router {
   #params?: Record<string, Params>
   #routes?: Set<string>
   #pathKeys: Set<string>
-  #handler: () => void
+  #handler: (uri?: Link) => void
 
   constructor ({
     routes,
@@ -31,7 +31,9 @@ export default class Router {
 
     this.#routes = new Set(routes)
     this.#pathKeys = new Set(pathKeys)
-    this.#handler = async () => await this.handler?.(await this.getRouteData())
+    this.#handler = async (uri?: Link) => {
+      await this.handler?.(await this.getRouteData(uri))
+    }
 
     history.replaceState(
       null, '', `${this.trimPathname()}${location.search}${location.hash}`
@@ -105,9 +107,10 @@ export default class Router {
     return params
   }
 
-  async getRouteData (uri = location): Promise<Page> {
+  async getRouteData (uri: Link = location): Promise<Page> {
     const routeParams = this.getParams(uri)
     const routeData = await import(`../pages/${routeParams.type}.js`)
+    console.log(routeData)
 
     return routeData
   }
@@ -146,7 +149,7 @@ export default class Router {
       uri = ''
     }
 
-    this.#handler()
+    this.#handler(new URL(uri, location.origin))
     history.pushState(null, '', uri)
   }
 }
