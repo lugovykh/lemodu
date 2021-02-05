@@ -32,7 +32,7 @@ export default class Router {
     this.#routes = new Set(routes)
     this.#pathKeys = new Set(pathKeys)
     this.#handler = async (uri?: Link) => {
-      await this.handler?.(await this.getRouteData(uri))
+      await this.handler?.(await this.getPage(uri))
     }
 
     history.replaceState(
@@ -44,8 +44,7 @@ export default class Router {
 
       const link = e.composedPath().find(element => {
         switch ((element as HTMLElement).tagName) {
-          case 'A':
-          case 'AREA':
+          case 'AREA': case 'A':
             return (element as Link).href
         }
         return false
@@ -82,32 +81,26 @@ export default class Router {
     }
   }
 
-  getParams ({ pathname, search }: Link = location): Params {
-    const params: Params = {}
-    const pathParams = this.trimPathname(pathname).split('/')
-    const rawParamsIterator = pathParams.values()
-    rawParamsIterator.next()
-
-    for (const key of this.#pathKeys) {
-      const value = rawParamsIterator.next().value
-
-      if (value != null) {
-        params[key] = value
-      } else if (rawParamsIterator.next().value != null) {
-        throw new URIError(`Invalid URI path: ${String(pathname)}`)
-      } else break
+  getParams ({ pathname = '', search }: Link = location): Params {
+    if (pathname.startsWith('/')) {
+      pathname = pathname.slice(1)
     }
-    if (search != null) {
-      const searchParams = search.slice(1).split('&')
-      for (const entry of searchParams) {
-        const [key, value] = entry.split('=')
-        params[key] = value
-      }
+    const { pathKeys = [] } = this
+    const pathValues = this.trimPathname(pathname).split('/')
+
+    const pathParams = new Map(pathKeys.map((key, i) => {
+      const value = pathValues[i]
+      return [key, value]
+    }))
+    const searchParams = new URLSearchParams(search)
+
+    return {
+      ...Object.fromEntries(pathParams),
+      ...Object.fromEntries(searchParams)
     }
-    return params
   }
 
-  async getRouteData (uri: Link = location): Promise<Page> {
+  async getPage (uri: Link = location): Promise<Page> {
     const routeParams = this.getParams(uri)
     const routeData = await import(`../pages/${routeParams.type}.js`)
 
