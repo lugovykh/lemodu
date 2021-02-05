@@ -15,8 +15,8 @@ interface PageParams {
 }
 
 export const type = 'users'
-export let title: string
-export let description: string
+export let title = ''
+export let description = ''
 export let structure: AppStructure
 
 const schemaResponse = fetch(`/schemas/${type}.json`)
