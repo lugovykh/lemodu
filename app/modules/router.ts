@@ -110,7 +110,6 @@ export default class Router {
   async getRouteData (uri: Link = location): Promise<Page> {
     const routeParams = this.getParams(uri)
     const routeData = await import(`../pages/${routeParams.type}.js`)
-    console.log(routeData)
 
     return routeData
   }
