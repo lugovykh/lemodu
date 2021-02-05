@@ -1,4 +1,4 @@
-import type { PageStructure } from '../app'
+import type { AppStructure } from '../app'
 
 import Datacard, {
   DatacardStructure,
@@ -25,7 +25,7 @@ const datacardStructure: DatacardStructure = {
   content: 'content'
 }
 
-export let structure: PageStructure
+export let structure: AppStructure
 
 export async function setParams (
   pageParams: PageParams
@@ -64,5 +64,5 @@ export async function setParams (
     title = String(data.title)
   }
 
-  structure = { content: [content] }
+  structure = { main: { content: [content] } }
 }

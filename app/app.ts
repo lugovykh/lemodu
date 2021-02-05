@@ -43,7 +43,7 @@ template.innerHTML = `
   <slot id="content"></slot>
 `
 
-interface AppStructure {
+export interface AppStructure {
   [section: string]: SectionStructure
 }
 
@@ -53,7 +53,7 @@ interface SectionStructure {
 
 export interface Page {
   title: string
-  structure: PageStructure
+  structure: AppStructure
   setParams: (params: unknown) => Promise<void>
 }
 
@@ -62,7 +62,7 @@ export interface PageStructure {
 }
 
 let router: Router
-const appStructure: AppStructure = {}
+const appStructure: AppStructure = { header: { senter: [new Menu()] } }
 
 const appName = 'Noname'
 
@@ -91,9 +91,11 @@ class App extends HTMLElement {
       routes: ['news', 'users', 'about'],
       handler: async (page: Page) => {
         await page.setParams(router.params)
-        this.structure.main = { ...appStructure.main, ...page.structure }
 
-        document.title = `${page.title} | ${appName}`
+        const { title, structure } = page
+        this.structure = { ...appStructure, ...structure }
+
+        document.title = `${title} | ${appName}`
         sessionStorage.setItem('pageTitle', document.title)
 
         await this.render()
@@ -104,7 +106,7 @@ class App extends HTMLElement {
   async render (): Promise<void> {
     const { structure } = this
 
-    for (const id in appStructure) {
+    for (const id in structure) {
       const currentSectionStructure = this.#currentStructure?.[id]
       const sectionStructure = structure[id]
       let section = this.children.namedItem(id)
