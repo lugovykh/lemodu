@@ -40,7 +40,9 @@ const styles = `
 const template = document.createElement('template')
 template.innerHTML = `
   <slot name="header"></slot>
+  <slot name="aside"></slot>
   <slot id="content"></slot>
+  <slot name="footer"></slot>
 `
 
 export interface AppStructure {
@@ -53,6 +55,7 @@ interface SectionStructure {
 
 export interface Page {
   title: string
+  description: string
   structure: AppStructure
   setParams: (params: unknown) => Promise<void>
 }
@@ -62,9 +65,18 @@ export interface PageStructure {
 }
 
 let router: Router
-const appStructure: AppStructure = { header: { senter: [new Menu()] } }
+const staticStructure: AppStructure = { header: { senter: [new Menu()] } }
 
 const appName = 'Noname'
+
+const documentDescription =
+  (document.head.children.namedItem('description') ??
+  document.createElement('meta')) as HTMLMetaElement
+
+if (!document.head.contains(documentDescription)) {
+  documentDescription.name = 'description'
+  document.head.append(documentDescription)
+}
 
 class App extends HTMLElement {
   structure: AppStructure
@@ -78,7 +90,7 @@ class App extends HTMLElement {
     shadow.adoptedStyleSheets = [styleSheet]
     shadow.append(template.content.cloneNode(true))
 
-    this.structure = appStructure
+    this.structure = staticStructure
   }
 
   async connectedCallback (): Promise<void> {
@@ -92,10 +104,11 @@ class App extends HTMLElement {
       handler: async (page: Page) => {
         await page.setParams(router.params)
 
-        const { title, structure } = page
-        this.structure = { ...appStructure, ...structure }
+        const { title, description, structure } = page
+        this.structure = { ...staticStructure, ...structure }
 
         document.title = `${title} | ${appName}`
+        documentDescription.content = description.substr(0, 155)
         sessionStorage.setItem('pageTitle', document.title)
 
         await this.render()

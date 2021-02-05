@@ -14,8 +14,11 @@ interface PageParams {
   id: string
 }
 
-export let title = ''
 export const type = 'news'
+export let title = ''
+export let description = ''
+export let structure: AppStructure
+
 const schemaResponse = fetch(`/schemas/${type}.json`)
 let schema: JsonSchemaObject
 
@@ -24,8 +27,6 @@ const datacardStructure: DatacardStructure = {
   meta: ['publication_date', 'author'],
   content: 'content'
 }
-
-export let structure: AppStructure
 
 export async function setParams (
   pageParams: PageParams
@@ -55,6 +56,7 @@ export async function setParams (
       content.append(contentItem)
     }
     title = 'News'
+    description = 'Latest news of this site'
   } else {
     content = new Datacard({
       data,

@@ -14,8 +14,11 @@ interface PageParams {
   id: string
 }
 
-export let title = ''
 export const type = 'users'
+export let title: string
+export let description: string
+export let structure: AppStructure
+
 const schemaResponse = fetch(`/schemas/${type}.json`)
 let schema: JsonSchemaObject
 
@@ -24,8 +27,6 @@ const datacardStructure: DatacardStructure = {
   meta: ['first_name', 'last_name', 'birth_date'],
   content: 'about'
 }
-
-export let structure: AppStructure
 
 export async function setParams (
   pageParams: PageParams
@@ -55,6 +56,7 @@ export async function setParams (
       content.append(contentItem)
     }
     title = 'Users'
+    description = 'Users of this site'
   } else {
     content = new Datacard({
       data,
