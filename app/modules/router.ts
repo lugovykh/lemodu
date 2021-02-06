@@ -43,18 +43,17 @@ export default class Router {
       if (e.altKey || e.ctrlKey || e.shiftKey) return
 
       const link = e.composedPath().find(element => {
-        switch ((element as HTMLElement).tagName) {
+        switch ((element as Element).tagName) {
           case 'AREA': case 'A':
             return (element as Link).href
         }
         return false
       })
+      if (link == null) return
 
-      if (link != null) {
-        e.preventDefault()
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.go(link as Link)
-      }
+      e.preventDefault()
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.go(link as Link)
     })
 
     addEventListener('popstate', () => this.#handler())
@@ -122,26 +121,14 @@ export default class Router {
       `${searchEntries.length > 0 ? searchEntries.join('&') : ''}`
   }
 
-  async go (link: Link | string): Promise<void> {
-    let uri: string
+  async go ({ href, pathname, search, hash }: Link): Promise<void> {
+    const urlString = href ??
+      `${this.trimPathname(pathname ?? '')}${search ?? ''}${hash ?? ''}`
+    const urlObject = new URL(urlString, location.origin)
 
-    if (typeof link === 'string') {
-      uri = link
-    } else if (link?.pathname != null) {
-      const { pathname, search, hash } = link
-      if (pathname === location.pathname &&
-        search === location.search &&
-        hash === location.hash
-      ) return
-      uri = `${this.trimPathname(pathname)}${search ?? ''}${hash ?? ''}`
-    } else if (link?.href != null) {
-      uri = link.href
-      if (uri === location.href) return
-    } else {
-      uri = ''
-    }
+    if (urlObject.href === location.href) return
 
-    this.#handler(new URL(uri, location.origin))
-    history.pushState(null, '', uri)
+    this.#handler(urlObject)
+    history.pushState(null, '', urlString)
   }
 }
