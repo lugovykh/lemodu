@@ -36,7 +36,7 @@ export default class Router {
     }
 
     history.replaceState(
-      null, '', `${this.trimPathname()}${location.search}${location.hash}`
+      null, '', `${this.normalizePathname()}${location.search}${location.hash}`
     )
 
     addEventListener('click', e => {
@@ -44,15 +44,12 @@ export default class Router {
 
       const link = e.composedPath().find(element => {
         switch ((element as Element).tagName) {
-          case 'AREA': case 'A':
-            return (element as Link).href
-        }
-        return false
+          case 'AREA': case 'A': return (element as Link).href
+        } return false
       })
       if (link == null) return
 
       e.preventDefault()
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.go(link as Link)
     })
 
@@ -63,21 +60,10 @@ export default class Router {
   get params (): Params {
     const { pathname, search } = location
     const uri = `${pathname}${search}`
-    let params = this.#params?.[uri]
+    const params = this.#params?.[uri] ?? this.getParams()
 
-    if (params == null) {
-      params = this.getParams({ pathname, search })
-      this.#params = { [uri]: params }
-    }
+    this.#params = { [uri]: params }
     return params
-  }
-
-  trimPathname (pathname = location.pathname): string {
-    if (pathname.length > 2 && pathname.endsWith('/')) {
-      return pathname.slice(0, -1)
-    } else {
-      return pathname
-    }
   }
 
   getParams ({ pathname = '', search }: Link = location): Params {
@@ -85,7 +71,7 @@ export default class Router {
       pathname = pathname.slice(1)
     }
     const { pathKeys = [] } = this
-    const pathValues = this.trimPathname(pathname).split('/')
+    const pathValues = this.normalizePathname(pathname).split('/')
 
     const pathParams = new Map(pathKeys.map((key, i) => {
       const value = pathValues[i]
@@ -96,6 +82,14 @@ export default class Router {
     return {
       ...Object.fromEntries(pathParams),
       ...Object.fromEntries(searchParams)
+    }
+  }
+
+  normalizePathname (pathname = location.pathname): string {
+    if (pathname.length > 2 && pathname.endsWith('/')) {
+      return pathname.slice(0, -1)
+    } else {
+      return pathname
     }
   }
 
@@ -121,14 +115,14 @@ export default class Router {
       `${searchEntries.length > 0 ? searchEntries.join('&') : ''}`
   }
 
-  async go ({ href, pathname, search, hash }: Link): Promise<void> {
-    const urlString = href ??
-      `${this.trimPathname(pathname ?? '')}${search ?? ''}${hash ?? ''}`
-    const urlObject = new URL(urlString, location.origin)
+  go ({ href, pathname, search, hash }: Link): void {
+    const uriString = href ??
+      `${this.normalizePathname(pathname ?? '')}${search ?? ''}${hash ?? ''}`
+    const uriObject = new URL(uriString, href ?? location.origin)
 
-    if (urlObject.href === location.href) return
+    if (uriObject.href === location.href) return
 
-    this.#handler(urlObject)
-    history.pushState(null, '', urlString)
+    this.#handler(uriObject)
+    history.pushState(null, '', uriString)
   }
 }
