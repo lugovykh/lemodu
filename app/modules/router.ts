@@ -114,7 +114,7 @@ export default class Router {
     const searchEntries = new URLSearchParams()
 
     for (const [key, value] of Object.entries(params)) {
-      const pathIndex = this.pathKeys?.findIndex(pathKey => pathKey === key)
+      const pathIndex = this.pathKeys?.indexOf(key)
 
       if (pathIndex != null && pathIndex !== -1) {
         pathEntries[pathIndex] = value
