@@ -21,7 +21,7 @@ template.innerHTML = `
 `
 
 export default class LabeledField extends HTMLElement {
-  constructor (label: string, value: HTMLElement) {
+  constructor (label: string, value: Element) {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

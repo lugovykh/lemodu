@@ -58,7 +58,7 @@ export interface DatacardStructure {
   [key: string]: string | string[]
 }
 
-export function wrapContent<T extends HTMLElement> (
+export function wrapContent<T extends Element> (
   field: string | T,
   wrapper: T
 ): T {
@@ -79,8 +79,8 @@ export function createField (
   value: string,
   schema: JsonSchema,
   props?: FieldProps
-): HTMLElement | string {
-  let field: string | HTMLElement
+): Element | string {
+  let field: string | Element
   let { name = '', label = '', slot = '', href = '' } = props ?? {}
 
   switch (schema.type) {
