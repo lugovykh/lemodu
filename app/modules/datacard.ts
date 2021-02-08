@@ -177,8 +177,7 @@ export default class Datacard extends HTMLElement {
       this.append(createForm(schema))
     } else {
       const props: Record<string, FieldProps> = {}
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      if (this.href && structure?.title != null) {
+      if (this.href != null && structure?.title != null) {
         props[structure.title] = {
           href: this.href
         }
