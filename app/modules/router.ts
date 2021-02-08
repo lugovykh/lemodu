@@ -14,6 +14,7 @@ export interface Link {
   hash?: string
   href?: string
 }
+
 interface Params {
   [key: string]: string
 }
@@ -23,7 +24,7 @@ export default class Router {
   pathKeys?: string[]
   handler?: (routeContent: Page) => void
 
-  #params?: Record<string, Params>
+  #paramsCache?: Record<string, Params>
   #routes?: Set<string>
   #pathKeys: Set<string>
   #handler: (uri?: Link) => void
@@ -39,8 +40,10 @@ export default class Router {
 
     this.#routes = new Set(routes)
     this.#pathKeys = new Set(pathKeys)
-    this.#handler = async (uri: Link = location) => {
-      this.handler?.(await this.getPage(uri))
+    this.#handler = (uri: Link = location) => {
+      this.getPage(uri)
+        .then(page => this.handler?.(page))
+        .catch(console.log)
     }
 
     history.replaceState(
@@ -68,9 +71,9 @@ export default class Router {
   get params (): Params {
     const { pathname, search } = location
     const uri = `${pathname}${search}`
-    const params = this.#params?.[uri] ?? this.getParams()
+    const params = this.#paramsCache?.[uri] ?? this.getParams()
 
-    this.#params = { [uri]: params }
+    this.#paramsCache = { [uri]: params }
     return params
   }
 
