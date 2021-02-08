@@ -106,7 +106,6 @@ class App extends HTMLElement {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     router = new Router({
-      routes: ['news', 'users', 'about'],
       handler: ({ title, description, structure }: Page) => {
         this.structure = { ...staticStructure, ...structure }
 

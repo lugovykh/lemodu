@@ -25,21 +25,15 @@ export default class Router {
   handler?: (routeContent: Page) => void
 
   #paramsCache?: Record<string, Params>
-  #routes?: Set<string>
-  #pathKeys: Set<string>
   #handler: (uri?: Link) => void
 
   constructor ({
-    routes,
     pathKeys = ['type', 'id'],
     handler
   }: Partial<Router>) {
-    this.routes = routes
     this.pathKeys = pathKeys
     this.handler = handler
 
-    this.#routes = new Set(routes)
-    this.#pathKeys = new Set(pathKeys)
     this.#handler = (uri: Link = location) => {
       this.getPage(uri)
         .then(page => this.handler?.(page))
