@@ -69,12 +69,17 @@ const staticStructure: AppStructure = { header: { senter: [new Menu()] } }
 
 const appName = 'Noname'
 
-const documentDescription =
-  (document.head.children.namedItem('description') ??
-  document.createElement('meta')) as HTMLMetaElement
+function setDocumentDescription (description: string): void {
+  const maxLength = 155
+  let documentDescription = document.head.children.namedItem('description')
 
-if (!document.head.contains(documentDescription)) {
-  documentDescription.name = 'description'
+  if (documentDescription == null) {
+    const newDocumentDescription = document.createElement('meta')
+    newDocumentDescription.name = 'description'
+    documentDescription = newDocumentDescription
+  }
+  (documentDescription as HTMLMetaElement)
+    .content = description.substr(0, maxLength)
   document.head.append(documentDescription)
 }
 
@@ -101,12 +106,11 @@ class App extends HTMLElement {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     router = new Router({
       routes: ['news', 'users', 'about'],
-      handler: (page: Page) => {
-        const { title, description, structure } = page
+      handler: ({ title, description, structure }: Page) => {
         this.structure = { ...staticStructure, ...structure }
 
         document.title = `${title} | ${appName}`
-        documentDescription.content = description.substr(0, 155)
+        setDocumentDescription(description)
         sessionStorage.setItem('pageTitle', document.title)
 
         this.render()
