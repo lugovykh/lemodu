@@ -101,9 +101,7 @@ class App extends HTMLElement {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     router = new Router({
       routes: ['news', 'users', 'about'],
-      handler: async (page: Page) => {
-        await page.setParams(router.params)
-
+      handler: (page: Page) => {
         const { title, description, structure } = page
         this.structure = { ...staticStructure, ...structure }
 
@@ -111,12 +109,12 @@ class App extends HTMLElement {
         documentDescription.content = description.substr(0, 155)
         sessionStorage.setItem('pageTitle', document.title)
 
-        await this.render()
+        this.render()
       }
     })
   }
 
-  async render (): Promise<void> {
+  render (): void {
     const { structure } = this
 
     for (const id in structure) {

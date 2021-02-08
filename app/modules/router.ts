@@ -1,5 +1,13 @@
 import type { Page } from '../app'
 
+export function normalizePathname (pathname = location.pathname): string {
+  if (pathname.length > 2 && pathname.endsWith('/')) {
+    return pathname.slice(0, -1)
+  } else {
+    return pathname
+  }
+}
+
 export interface Link {
   pathname?: string
   search?: string
@@ -13,7 +21,7 @@ interface Params {
 export default class Router {
   routes?: string[]
   pathKeys?: string[]
-  handler?: (routeContent: Page) => Promise<void>
+  handler?: (routeContent: Page) => void
 
   #params?: Record<string, Params>
   #routes?: Set<string>
@@ -31,12 +39,12 @@ export default class Router {
 
     this.#routes = new Set(routes)
     this.#pathKeys = new Set(pathKeys)
-    this.#handler = async (uri?: Link) => {
-      await this.handler?.(await this.getPage(uri))
+    this.#handler = async (uri: Link = location) => {
+      this.handler?.(await this.getPage(uri))
     }
 
     history.replaceState(
-      null, '', `${this.normalizePathname()}${location.search}${location.hash}`
+      null, '', `${normalizePathname()}${location.search}${location.hash}`
     )
 
     addEventListener('click', e => {
@@ -71,7 +79,7 @@ export default class Router {
       pathname = pathname.slice(1)
     }
     const { pathKeys = [] } = this
-    const pathValues = this.normalizePathname(pathname).split('/')
+    const pathValues = normalizePathname(pathname).split('/')
 
     const pathParams = new Map(pathKeys.map((key, i) => {
       const value = pathValues[i]
@@ -85,19 +93,23 @@ export default class Router {
     }
   }
 
-  normalizePathname (pathname = location.pathname): string {
-    if (pathname.length > 2 && pathname.endsWith('/')) {
-      return pathname.slice(0, -1)
-    } else {
-      return pathname
-    }
+  async getPage (uri: Link = location): Promise<Page> {
+    const params = this.getParams(uri)
+    const page = await import(`../pages/${params.type}.js`)
+
+    await page.setParams(params)
+    return page
   }
 
-  async getPage (uri: Link = location): Promise<Page> {
-    const routeParams = this.getParams(uri)
-    const routeData = await import(`../pages/${routeParams.type}.js`)
+  go ({ href, pathname, search, hash }: Link): void {
+    const uriString = href ??
+      `${normalizePathname(pathname ?? '')}${search ?? ''}${hash ?? ''}`
+    const uriObject = new URL(uriString, href ?? location.origin)
 
-    return routeData
+    if (uriObject.href === location.href) return
+
+    this.#handler(uriObject)
+    history.pushState(null, '', uriString)
   }
 
   generateUri (params: Params): string {
@@ -113,16 +125,5 @@ export default class Router {
     }
     return `/${pathEntries.join('/')}` +
       `${searchEntries.length > 0 ? searchEntries.join('&') : ''}`
-  }
-
-  go ({ href, pathname, search, hash }: Link): void {
-    const uriString = href ??
-      `${this.normalizePathname(pathname ?? '')}${search ?? ''}${hash ?? ''}`
-    const uriObject = new URL(uriString, href ?? location.origin)
-
-    if (uriObject.href === location.href) return
-
-    this.#handler(uriObject)
-    history.pushState(null, '', uriString)
   }
 }
