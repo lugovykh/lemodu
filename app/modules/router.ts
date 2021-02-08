@@ -116,17 +116,18 @@ export default class Router {
   }
 
   generateUri (params: Params): string {
-    const pathEntries: string[] = []
-    const searchEntries: string[] = []
+    const pathEntries = []
+    const searchEntries = new URLSearchParams()
 
     for (const [key, value] of Object.entries(params)) {
-      if (this.#pathKeys.has(key)) {
-        pathEntries.push(`${value}`)
+      const pathIndex = this.pathKeys?.findIndex(pathKey => pathKey === key)
+
+      if (pathIndex != null && pathIndex !== -1) {
+        pathEntries[pathIndex] = value
       } else {
-        searchEntries.push(`${key}=${value}`)
+        searchEntries.set(key, value)
       }
     }
-    return `/${pathEntries.join('/')}` +
-      `${searchEntries.length > 0 ? searchEntries.join('&') : ''}`
+    return `/${pathEntries.join('/')}${searchEntries.toString()}`
   }
 }
