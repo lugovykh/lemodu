@@ -54,6 +54,7 @@ interface SectionStructure {
 }
 
 export interface Page {
+  name: string
   title: string
   description: string
   structure: AppStructure

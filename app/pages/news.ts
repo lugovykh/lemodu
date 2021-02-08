@@ -14,12 +14,12 @@ interface PageParams {
   id: string
 }
 
-export const type = 'news'
+export const name = 'news'
 export let title = ''
 export let description = ''
 export let structure: AppStructure
 
-const schemaResponse = fetch(`/schemas/${type}.json`)
+const schemaResponse = fetch(`/schemas/${name}.json`)
 let schema: JsonSchemaObject
 
 const datacardStructure: DatacardStructure = {
@@ -33,7 +33,7 @@ export async function setParams (
 ): Promise<void> {
   const { id = '' } = pageParams
   const dataResponse = await fetch(
-    `/${type}` +
+    `/${name}` +
     (id !== '' ? `/${id}` : '') +
     '?data'
   )
@@ -51,7 +51,7 @@ export async function setParams (
         schema,
         structure: datacardStructure
       })
-      contentItem.href = `/${type}/${entry._id.$oid}`
+      contentItem.href = `/${name}/${entry._id.$oid}`
       contentItem.id = entry._id.$oid
       content.append(contentItem)
     }
