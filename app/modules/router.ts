@@ -22,8 +22,10 @@ export function normalizePathname (pathname = location.pathname): string {
 export default class Router {
   routes?: string[]
   pathKeys?: string[]
-  handler?: (routeContent: Page) => void
-  #handleRoute: (page?: Page) => Promise<void>
+  handler?: (page: Page) => void
+  #handleRoute = async (page?: Page): Promise<void> => {
+    this.handler?.(page ?? await this.getPage())
+  }
 
   constructor ({
     pathKeys = ['type', 'id'],
@@ -32,16 +34,12 @@ export default class Router {
     this.pathKeys = pathKeys
     this.handler = handler
 
-    this.#handleRoute = async (page) => {
-      this.handler?.(page ?? await this.getPage())
-    }
     this.setClickHandler()
     this.setRouteHandler()
 
     history.replaceState(
       null, '', `${normalizePathname()}${location.search}${location.hash}`
     )
-
     this.#handleRoute().catch(console.log)
   }
 
