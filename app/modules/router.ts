@@ -22,9 +22,9 @@ export function normalizePathname (pathname = location.pathname): string {
 export default class Router {
   routes?: string[]
   pathKeys?: string[]
-  handler?: (page: Page) => void
+  handler?: (page: Page) => void | Promise<void>
   #handleRoute = async (page?: Page): Promise<void> => {
-    this.handler?.(page ?? await this.getPage())
+    await this.handler?.(page ?? await this.getPage())
   }
 
   constructor ({
