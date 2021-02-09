@@ -23,9 +23,7 @@ export default class Router {
   routes?: string[]
   pathKeys?: string[]
   handler?: (routeContent: Page) => void
-
-  #paramsCache?: Record<string, Params>
-  #handler: (uri?: Link) => void
+  #handleRoute: (page?: Page) => Promise<void>
 
   constructor ({
     pathKeys = ['type', 'id'],
@@ -34,32 +32,49 @@ export default class Router {
     this.pathKeys = pathKeys
     this.handler = handler
 
-    this.#handler = (uri: Link = location) => {
-      this.getPage(uri)
-        .then(page => this.handler?.(page))
-        .catch(console.log)
+    this.#handleRoute = async (page) => {
+      this.handler?.(page ?? await this.getPage())
     }
+    this.setClickHandler()
+    this.setRouteHandler()
 
     history.replaceState(
       null, '', `${normalizePathname()}${location.search}${location.hash}`
     )
 
-    addEventListener('click', e => {
+    this.#handleRoute().catch(console.log)
+  }
+
+  setClickHandler (): void {
+    const handleClick = async (e: MouseEvent): Promise<void> => {
       if (e.altKey || e.ctrlKey || e.shiftKey) return
 
       const link = e.composedPath().find(element => {
-        switch ((element as Element).tagName) {
+        switch ((element as Element)?.tagName) {
           case 'AREA': case 'A': return (element as Link).href
         } return false
       })
-      if (link == null) return
+      if (link != null) {
+        e.preventDefault()
+        await this.go(link as Link)
+      }
+      this.setClickHandler()
+    }
 
-      e.preventDefault()
-      this.go(link as Link)
-    })
+    addEventListener('click', e => {
+      handleClick(e).catch(console.log)
+    }, { once: true })
+  }
 
-    addEventListener('popstate', () => this.#handler())
-    this.#handler()
+  setRouteHandler (): void {
+    const handleRoute = async (): Promise<void> => {
+      await this.#handleRoute()
+      this.setRouteHandler()
+    }
+
+    addEventListener('popstate', () => {
+      handleRoute().catch(console.log)
+    }, { once: true })
   }
 
   getParams ({ pathname = '', search }: Link = location): Params {
@@ -89,15 +104,16 @@ export default class Router {
     return page
   }
 
-  go ({ href, pathname, search, hash }: Link): void {
+  async go ({ href, pathname, search, hash }: Link): Promise<void> {
     const uriString = href ??
       `${normalizePathname(pathname ?? '')}${search ?? ''}${hash ?? ''}`
     const uriObject = new URL(uriString, href ?? location.origin)
 
     if (uriObject.href === location.href) return
 
-    this.#handler(uriObject)
-    history.pushState(null, '', uriString)
+    const page = await this.getPage(uriObject)
+    history.pushState(null, page.title ?? '', uriString)
+    await this.#handleRoute(page)
   }
 
   generateUri (params: Params): string {
