@@ -1,13 +1,13 @@
 import Router from './modules/router.js'
 
 import Header from './modules/header.js'
+import Main from './modules/main.js'
 import Menu from './modules/menu.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styleSheet: any = new CSSStyleSheet()
 const styles = `
   :host {
-    position: relative;
     display: grid;
     grid-template-areas: 
       "header"
@@ -18,23 +18,6 @@ const styles = `
     font-family: var(--main-font-family);
     color: var(--main-font-color);
     background-color: var(--additional-background-color);
-  }
-  #content::slotted(main) {
-    grid-area: content;
-    display: grid;
-    grid: auto / minmax(200px, 800px);
-    justify-content: center;
-    align-content: start;
-  }
-  #content::slotted(main.collection) {
-    grid: auto / repeat(auto-fit, minmax(320px, 480px));
-    gap: 2em;
-  }
-  @media (max-width: 384px) {
-    #content::slotted(main) {
-      padding-left: 0;
-      padding-right: 0;
-    }
   }
 `
 const template = document.createElement('template')
@@ -131,9 +114,11 @@ class App extends HTMLElement {
           case 'header':
             section = new Header()
             break
-          default:
-            section = document.createElement('main')
+          case 'main':
+            section = new Main()
             break
+          default:
+            section = document.createElement('section')
         }
         section.id = id
         this.append(section)
