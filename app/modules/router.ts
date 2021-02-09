@@ -1,13 +1,5 @@
 import type { Page } from '../app'
 
-export function normalizePathname (pathname = location.pathname): string {
-  if (pathname.length > 2 && pathname.endsWith('/')) {
-    return pathname.slice(0, -1)
-  } else {
-    return pathname
-  }
-}
-
 export interface Link {
   pathname?: string
   search?: string
@@ -17,6 +9,14 @@ export interface Link {
 
 interface Params {
   [key: string]: string
+}
+
+export function normalizePathname (pathname = location.pathname): string {
+  if (pathname.length > 2 && pathname.endsWith('/')) {
+    return pathname.slice(0, -1)
+  } else {
+    return pathname
+  }
 }
 
 export default class Router {
@@ -60,15 +60,6 @@ export default class Router {
 
     addEventListener('popstate', () => this.#handler())
     this.#handler()
-  }
-
-  get params (): Params {
-    const { pathname, search } = location
-    const uri = `${pathname}${search}`
-    const params = this.#paramsCache?.[uri] ?? this.getParams()
-
-    this.#paramsCache = { [uri]: params }
-    return params
   }
 
   getParams ({ pathname = '', search }: Link = location): Params {
