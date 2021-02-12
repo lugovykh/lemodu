@@ -19,13 +19,19 @@ export function normalizePathname (pathname = location.pathname): string {
   }
 }
 
+export function isLink (link: Element): boolean {
+  switch (link.tagName) {
+    case 'AREA': case 'A': break
+    default: return false
+  }
+  return (link as HTMLAnchorElement).href != null &&
+    (link as HTMLAnchorElement).href !== ''
+}
+
 export default class Router {
   routes?: string[]
   pathKeys?: string[]
   handler?: (page: Page) => void | Promise<void>
-  #handleRoute = async (page?: Page): Promise<void> => {
-    await this.handler?.(page ?? await this.getPage())
-  }
 
   constructor ({
     pathKeys = ['type', 'id'],
@@ -34,8 +40,8 @@ export default class Router {
     this.pathKeys = pathKeys
     this.handler = handler
 
-    this.setClickHandler()
-    this.setRouteHandler()
+    this.#addClickListener()
+    this.#addPopstateListener()
 
     history.replaceState(
       null, '', `${normalizePathname()}${location.search}${location.hash}`
@@ -43,35 +49,34 @@ export default class Router {
     this.#handleRoute().catch(console.log)
   }
 
-  setClickHandler (): void {
+  #handleRoute = async (page?: Page): Promise<void> => {
+    await this.handler?.(page ?? await this.getPage())
+  }
+
+  #addClickListener = (): void => {
     const handleClick = async (e: MouseEvent): Promise<void> => {
       if (e.altKey || e.ctrlKey || e.shiftKey) return
 
-      const link = e.composedPath().find(element => {
-        switch ((element as Element)?.tagName) {
-          case 'AREA': case 'A': return (element as Link).href
-        } return false
-      })
+      const link = e.composedPath().find(target => isLink(target as Element))
+
       if (link != null) {
-        e.preventDefault()
         await this.go(link as Link)
+        e.preventDefault()
       }
-      this.setClickHandler()
     }
 
     addEventListener('click', e => {
+      this.#addClickListener()
       handleClick(e).catch(console.log)
     }, { once: true })
   }
 
-  setRouteHandler (): void {
-    const handleRoute = async (): Promise<void> => {
-      await this.#handleRoute()
-      this.setRouteHandler()
-    }
+  #addPopstateListener = (): void => {
+    const handlePopstate = this.#handleRoute
 
     addEventListener('popstate', () => {
-      handleRoute().catch(console.log)
+      this.#addPopstateListener()
+      handlePopstate().catch(console.log)
     }, { once: true })
   }
 
