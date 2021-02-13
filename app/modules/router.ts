@@ -63,10 +63,10 @@ export default class Router {
 
       const link = e.composedPath().find(target => isLink(target as Element))
 
-      if (link != null) {
-        await this.go(link as Link)
-        e.preventDefault()
-      }
+      if (link == null) return
+
+      e.preventDefault()
+      await this.go(link as Link)
     }
 
     addEventListener('click', e => {
