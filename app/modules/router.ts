@@ -24,7 +24,8 @@ export function normalizePathname (pathname = location.pathname): string {
 }
 
 export function isLink (target: EventTarget | Element): boolean {
-  if (target instanceof HTMLAnchorElement ||
+  if (
+    target instanceof HTMLAnchorElement ||
     target instanceof HTMLAreaElement
   ) {
     return target.href !== ''
@@ -104,9 +105,9 @@ export default class Router {
 
   async getPage (uri: Link = location): Promise<Page> {
     const params = this.getParams(uri)
-    const pageModule: PageModule = await import(`../pages/${params.type}.js`)
+    const page: PageModule = await import(`../pages/${params.type}.js`)
 
-    return await pageModule.generate(params)
+    return await page.generate(params)
   }
 
   async go ({ href, pathname, search, hash }: Link): Promise<void> {
