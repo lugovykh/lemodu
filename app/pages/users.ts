@@ -15,7 +15,6 @@ interface PageParams {
 }
 
 const name = 'users'
-
 const schemaResponse = fetch(`/schemas/${name}.json`)
 let schema: JsonSchemaObject
 
@@ -37,35 +36,41 @@ export async function generate (
     '?data'
   )
   const data: Data | Data[] = await dataResponse.json()
+  let content: () => Element[]
   schema ??= await (await schemaResponse).json()
-  let content: HTMLElement
 
   if (Array.isArray(data)) {
     title = 'Users'
     description = 'Users of this site'
-    content = document.createElement('div')
-    content.classList.add('collection')
+    content = () => {
+      const slotContent = document.createElement('div')
+      slotContent.classList.add('collection')
 
-    for (const entry of data) {
-      const contentItem = new Datacard({
-        data: entry,
-        schema,
-        structure: datacardStructure
-      })
-      contentItem.href = `/${name}/${entry._id.$oid}`
-      contentItem.id = entry._id.$oid
-      content.append(contentItem)
+      for (const entry of data) {
+        const contentItem = new Datacard({
+          data: entry,
+          schema,
+          structure: datacardStructure
+        })
+        contentItem.href = `/${name}/${entry._id.$oid}`
+        contentItem.id = entry._id.$oid
+        slotContent.append(contentItem)
+      }
+      return [slotContent]
     }
   } else {
     title = String(data.nickname)
     description = `User profile: ${title}`
-    content = new Datacard({
-      data,
-      schema,
-      structure: datacardStructure
-    })
+    content = () => {
+      const slotContent: Element = new Datacard({
+        data,
+        schema,
+        structure: datacardStructure
+      })
+      return [slotContent]
+    }
   }
-  const structure = { main: { content: [content] } }
+  const structure = { main: { content } }
 
   return {
     name,

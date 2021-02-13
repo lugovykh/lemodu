@@ -37,34 +37,40 @@ export async function generate (
   )
   const data: Data | Data[] = await dataResponse.json()
   schema ??= await (await schemaResponse).json()
-  let content: HTMLElement
+  let content: () => Element[]
 
   if (Array.isArray(data)) {
     title = 'News'
     description = 'Latest news of this site'
-    content = document.createElement('div')
-    content.classList.add('collection')
+    content = () => {
+      const slotContent = document.createElement('div')
+      slotContent.classList.add('collection')
 
-    for (const entry of data) {
-      const contentItem = new Datacard({
-        data: entry,
-        schema,
-        structure: datacardStructure
-      })
-      contentItem.href = `/${name}/${entry._id.$oid}`
-      contentItem.id = entry._id.$oid
-      content.append(contentItem)
+      for (const entry of data) {
+        const contentItem = new Datacard({
+          data: entry,
+          schema,
+          structure: datacardStructure
+        })
+        contentItem.href = `/${name}/${entry._id.$oid}`
+        contentItem.id = entry._id.$oid
+        slotContent.append(contentItem)
+      }
+      return [slotContent]
     }
   } else {
     title = String(data.title)
     description = String(data.content)
-    content = new Datacard({
-      data,
-      schema,
-      structure: datacardStructure
-    })
+    content = () => {
+      const slotContent = new Datacard({
+        data,
+        schema,
+        structure: datacardStructure
+      })
+      return [slotContent]
+    }
   }
-  const structure = { main: { content: [content] } }
+  const structure = { main: { content } }
 
   return {
     name,
