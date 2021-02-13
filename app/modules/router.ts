@@ -1,14 +1,18 @@
 import type { Page } from '../app'
 
+interface Params {
+  [key: string]: string
+}
+
+export interface PageModule {
+  generate: (params: Params) => Page | Promise<Page>
+}
+
 export interface Link {
   pathname?: string
   search?: string
   hash?: string
   href?: string
-}
-
-interface Params {
-  [key: string]: string
 }
 
 export function normalizePathname (pathname = location.pathname): string {
@@ -101,10 +105,9 @@ export default class Router {
 
   async getPage (uri: Link = location): Promise<Page> {
     const params = this.getParams(uri)
-    const page = await import(`../pages/${params.type}.js`)
+    const pageModule: PageModule = await import(`../pages/${params.type}.js`)
 
-    await page.setParams(params)
-    return page
+    return await pageModule.generate(params)
   }
 
   async go ({ href, pathname, search, hash }: Link): Promise<void> {
