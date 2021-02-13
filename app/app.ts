@@ -91,7 +91,7 @@ class App extends HTMLElement {
       handler: ({ title, description, structure }: Page) => {
         this.structure = { ...staticStructure, ...structure }
 
-        document.title = `${title} | ${appName}`
+        document.title = `${title} — ${appName}`
         setDocumentDescription(description)
         sessionStorage.setItem('pageTitle', document.title)
 
