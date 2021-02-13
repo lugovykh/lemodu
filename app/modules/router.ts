@@ -23,13 +23,12 @@ export function normalizePathname (pathname = location.pathname): string {
   }
 }
 
-export function isLink (link: Element): boolean {
-  switch (link.tagName) {
-    case 'AREA': case 'A': break
-    default: return false
-  }
-  return (link as HTMLAnchorElement).href != null &&
-    (link as HTMLAnchorElement).href !== ''
+export function isLink (target: EventTarget | Element): boolean {
+  if (target instanceof HTMLAnchorElement ||
+    target instanceof HTMLAreaElement
+  ) {
+    return target.href !== ''
+  } else return false
 }
 
 export default class Router {
@@ -61,7 +60,7 @@ export default class Router {
     const handleClick = async (e: MouseEvent): Promise<void> => {
       if (e.altKey || e.ctrlKey || e.shiftKey) return
 
-      const link = e.composedPath().find(target => isLink(target as Element))
+      const link = e.composedPath().find(isLink)
 
       if (link == null) return
 
