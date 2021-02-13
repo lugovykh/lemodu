@@ -1,4 +1,4 @@
-import type { AppStructure } from '../app'
+import type { Page } from '../app'
 
 import Datacard, {
   DatacardStructure,
@@ -14,10 +14,7 @@ interface PageParams {
   id: string
 }
 
-export const name = 'users'
-export let title = ''
-export let description = ''
-export let structure: AppStructure
+const name = 'users'
 
 const schemaResponse = fetch(`/schemas/${name}.json`)
 let schema: JsonSchemaObject
@@ -28,9 +25,11 @@ const datacardStructure: DatacardStructure = {
   content: 'about'
 }
 
-export async function setParams (
+export async function generate (
   pageParams: PageParams
-): Promise<void> {
+): Promise<Page> {
+  let title: string
+  let description: string
   const { id = '' } = pageParams
   const dataResponse = await fetch(
     `/${name}` +
@@ -42,6 +41,8 @@ export async function setParams (
   let content: HTMLElement
 
   if (Array.isArray(data)) {
+    title = 'Users'
+    description = 'Users of this site'
     content = document.createElement('div')
     content.classList.add('collection')
 
@@ -55,16 +56,21 @@ export async function setParams (
       contentItem.id = entry._id.$oid
       content.append(contentItem)
     }
-    title = 'Users'
-    description = 'Users of this site'
   } else {
+    title = String(data.nickname)
+    description = `User profile: ${title}`
     content = new Datacard({
       data,
       schema,
       structure: datacardStructure
     })
-    title = String(data.title)
   }
+  const structure = { main: { content: [content] } }
 
-  structure = { main: { content: [content] } }
+  return {
+    name,
+    title,
+    description,
+    structure
+  }
 }
