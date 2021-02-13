@@ -33,7 +33,7 @@ export interface AppStructure {
 }
 
 interface SectionStructure {
-  [slot: string]: Element[]
+  [slot: string]: () => Element[] | Promise<Element[]>
 }
 
 export interface Page {
@@ -48,7 +48,11 @@ export interface PageStructure {
 }
 
 let router: Router
-const staticStructure: AppStructure = { header: { senter: [new Menu()] } }
+const staticStructure: AppStructure = {
+  header: {
+    content: () => [new Menu()]
+  }
+}
 
 const appName = 'Noname'
 
@@ -88,19 +92,19 @@ class App extends HTMLElement {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     router = new Router({
-      handler: ({ title, description, structure }: Page) => {
+      handler: async ({ title, description, structure }: Page) => {
         this.structure = { ...staticStructure, ...structure }
 
         document.title = `${title} — ${appName}`
         setDocumentDescription(description)
         sessionStorage.setItem('pageTitle', document.title)
 
-        this.render()
+        await this.render()
       }
     })
   }
 
-  render (): void {
+  async render (): Promise<void> {
     const { structure } = this
 
     for (const id in structure) {
@@ -127,7 +131,12 @@ class App extends HTMLElement {
         section.textContent = ''
 
         for (const slot in sectionStructure) {
-          section.append(...sectionStructure[slot])
+          const slotContent = await sectionStructure[slot]()
+
+          for (const element of slotContent) {
+            if (slot !== 'content') element.slot = slot
+            section.append(element)
+          }
         }
       }
     }
