@@ -41,7 +41,6 @@ export interface Page {
   title: string
   description: string
   structure: AppStructure
-  setParams: (params: unknown) => Promise<void>
 }
 
 export interface PageStructure {
