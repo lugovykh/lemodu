@@ -23,7 +23,7 @@ export function normalizePathname (pathname = location.pathname): string {
   }
 }
 
-export function isLink (target: EventTarget | Element): boolean {
+export function isLink (target: unknown): boolean {
   if (
     target instanceof HTMLAnchorElement ||
     target instanceof HTMLAreaElement
