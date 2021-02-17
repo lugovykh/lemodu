@@ -11,7 +11,7 @@ interface Data {
 }
 
 interface PageParams {
-  id: string
+  id?: string
 }
 
 const name = 'news'
@@ -24,15 +24,20 @@ const datacardStructure: DatacardStructure = {
   content: 'content'
 }
 
+export const pathTree = [
+  [{ action: ['add'] }],
+  ['id', { action: ['edit', 'delete'] }]
+]
+
 export async function generate (
   pageParams: PageParams
 ): Promise<Page> {
   let title: string
   let description: string
-  const { id = '' } = pageParams
+  const { id } = pageParams
   const dataResponse = await fetch(
     `/${name}` +
-    (id !== '' ? `/${id}` : '') +
+    (id != null ? `/${id}` : '') +
     '?data'
   )
   const data: Data | Data[] = await dataResponse.json()

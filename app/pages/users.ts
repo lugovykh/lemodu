@@ -24,6 +24,11 @@ const datacardStructure: DatacardStructure = {
   content: 'about'
 }
 
+export const pathTree = [
+  [{ action: ['add'] }],
+  ['id', { action: ['edit', 'delete'] }]
+]
+
 export async function generate (
   pageParams: PageParams
 ): Promise<Page> {
