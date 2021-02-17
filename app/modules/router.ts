@@ -1,11 +1,27 @@
 import type { Page } from '../app'
 
-interface Params {
-  [key: string]: string
+export interface PathTree extends Array<
+| string
+| Record<string, string>
+| PathTree
+> {}
+
+interface PathEntry {
+  [paramKey: string]: PathTree
+}
+interface Pathes {
+  [paramValue: string]: PathEntry
+}
+
+interface PageParams extends Record<string, string> {}
+
+interface RouteParams extends PageParams {
+  remainingPathname: string
 }
 
 export interface PageModule {
-  generate: (params: Params) => Page | Promise<Page>
+  pathTree?: PathTree
+  generate: (params: PageParams) => Page | Promise<Page>
 }
 
 export interface Link {
@@ -29,19 +45,18 @@ export function isLink (target: unknown): boolean {
     target instanceof HTMLAreaElement
   ) {
     return target.href !== ''
-  } else return false
+  } return false
 }
 
 export default class Router {
-  routes?: string[]
-  pathKeys?: string[]
+  pathTree: PathTree
   handler?: (page: Page) => void | Promise<void>
 
   constructor ({
-    pathKeys = ['type', 'id'],
+    pathTree = ['page'],
     handler
   }: Partial<Router>) {
-    this.pathKeys = pathKeys
+    this.pathTree = pathTree
     this.handler = handler
 
     this.#addClickListener()
@@ -84,30 +99,88 @@ export default class Router {
     }, { once: true })
   }
 
-  getParams ({ pathname = '', search }: Link = location): Params {
+  parsePathes (pathTree = this.pathTree): Pathes {
+    const pathes: Pathes = {}
+
+    for (const point of pathTree) {
+      const remainingPath: PathTree = []
+
+      if (Array.isArray(point)) {
+        const branchingPath = point
+
+        Object.assign(pathes, this.parsePathes(branchingPath))
+        remainingPath.push(...point.slice(1))
+      } else if (typeof point === 'string') {
+        const paramKey = point
+        const anyValue = '*'
+
+        pathes[anyValue] = { [paramKey]: remainingPath }
+      } else {
+        for (const paramKey in point) {
+          const validValues = point[paramKey]
+
+          for (const value of validValues) {
+            pathes[value] = { [paramKey]: remainingPath }
+          }
+        }
+      }
+      remainingPath.push(...pathTree.slice(1))
+    }
+    return pathes
+  }
+
+  parseParams (
+    { pathname = '', search }: Link = location,
+    pathTree = this.pathTree
+  ): RouteParams {
     if (pathname.startsWith('/')) {
       pathname = pathname.slice(1)
     }
-    const { pathKeys = [] } = this
-    const pathValues = normalizePathname(pathname).split('/')
+    const pathValues = pathname.split('/')
+    const pathParams: PageParams = {}
+    let remainingPath = pathTree
+    let remainingPathname = ''
 
-    const pathParams = new Map(pathKeys.map((key, i) => {
-      const value = pathValues[i]
-      return [key, value]
-    }))
-    const searchParams = new URLSearchParams(search)
+    for (const value of pathValues) {
+      if (remainingPath.length === 0) {
+        remainingPathname += `/${value}`
+        continue
+      }
+      const pathes = this.parsePathes(remainingPath)
+      const pathEntry = pathes[value] ?? pathes['*']
 
-    return {
-      ...Object.fromEntries(pathParams),
-      ...Object.fromEntries(searchParams)
+      if (pathEntry == null) throw new URIError(String(remainingPath))
+
+      for (const paramKey in pathEntry) {
+        pathParams[paramKey] = value
+        remainingPath = pathEntry[paramKey]
+      }
     }
+
+    const searchParams = Object.fromEntries(new URLSearchParams(search))
+
+    return { ...pathParams, remainingPathname, ...searchParams }
   }
 
-  async getPage (uri: Link = location): Promise<Page> {
-    const params = this.getParams(uri)
-    const page: PageModule = await import(`../pages/${params.type}.js`)
+  async getPage ({ pathname, search }: Link = location): Promise<Page> {
+    const {
+      page = 'main',
+      remainingPathname
+    } = this.parseParams({ pathname }) as RouteParams & { page?: string }
 
-    return await page.generate(params)
+    const {
+      pathTree = [],
+      generate
+    } = await import(`../pages/${page}.js`) as PageModule
+
+    const {
+      remainingPathname: impossibleTail,
+      ...pageParams
+    } = this.parseParams({ pathname: remainingPathname, search }, pathTree)
+
+    if (impossibleTail !== '') throw new URIError(impossibleTail)
+
+    return await generate(pageParams)
   }
 
   async go ({ href, pathname, search, hash }: Link): Promise<void> {
@@ -122,12 +195,12 @@ export default class Router {
     await this.#handleRoute(page)
   }
 
-  generateUri (params: Params): string {
+  generateUri (params: PageParams): string {
     const pathEntries = []
     const searchEntries = new URLSearchParams()
 
     for (const [key, value] of Object.entries(params)) {
-      const pathIndex = this.pathKeys?.indexOf(key)
+      const pathIndex = this.pathTree?.indexOf(key)
 
       if (pathIndex != null && pathIndex !== -1) {
         pathEntries[pathIndex] = value
