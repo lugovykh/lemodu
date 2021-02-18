@@ -166,8 +166,9 @@ export default class Router {
   async getPage ({ pathname, search }: Link = location): Promise<Page> {
     const {
       page = 'main',
-      remainingPathname
-    } = this.parseParams({ pathname }) as RouteParams
+      remainingPathname,
+      ...basicParams
+    } = this.parseParams({ pathname })
 
     const {
       pathTree = [],
@@ -181,7 +182,7 @@ export default class Router {
 
     if (impossibleTail !== '') throw new URIError(impossibleTail)
 
-    return await generate(pageParams)
+    return await generate({ ...basicParams, ...pageParams })
   }
 
   async go ({ href, pathname, search, hash }: Link): Promise<void> {
