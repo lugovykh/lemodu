@@ -134,6 +134,8 @@ export default class Router {
     if (pathname.startsWith('/')) {
       pathname = pathname.slice(1)
     }
+    if (pathname === '') return {}
+
     const pathValues = pathname.split('/')
     const pathParams: PageParams = {}
 
