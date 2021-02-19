@@ -1,21 +1,17 @@
 import type { Page } from '../app'
 
-interface PageParams {
-  [key: string]: string
-}
+type ParamKey = string
+interface ParamValues { [paramKey: string]: string[] }
+export type PathTree = Array<ParamKey | ParamValues | PathTree>
+
+interface PathEntry { [paramKey: string]: PathTree }
+interface Pathes { [paramValue: string]: PathEntry }
+
 interface RouteParams {
   page?: string
   remainingPathname?: string
 }
-
-interface PathEntry {
-  [paramKey: string]: PathTree
-}
-interface Pathes {
-  [paramValue: string]: PathEntry
-}
-
-export type PathTree = Array<string | PageParams | PathTree>
+export interface PageParams { [key: string]: string }
 
 export interface PageModule {
   pathTree?: PathTree
@@ -29,14 +25,6 @@ export interface Link {
   hash?: string
 }
 
-export function normalizePathname (pathname = location.pathname): string {
-  if (pathname.length > 2 && pathname.endsWith('/')) {
-    return pathname.slice(0, -1)
-  } else {
-    return pathname
-  }
-}
-
 export function isLink (target: unknown): boolean {
   if (
     target instanceof HTMLAnchorElement ||
@@ -44,6 +32,14 @@ export function isLink (target: unknown): boolean {
   ) {
     return target.href !== ''
   } return false
+}
+
+export function normalizePathname (pathname = location.pathname): string {
+  if (pathname.length > 2 && pathname.endsWith('/')) {
+    return pathname.slice(0, -1)
+  } else {
+    return pathname
+  }
 }
 
 export default class Router {
