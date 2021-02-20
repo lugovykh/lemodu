@@ -59,12 +59,16 @@ export default class Router {
 
   get handler (): PageHandler | undefined { return this.#handler }
   set handler (handler: PageHandler | undefined) {
-    if (handler == null) return
+    if (handler == null) {
+      this.#deleteClickListener?.()
+      this.#deletePopstateListener?.()
+      return
+    } else if (this.#handler == null) {
+      this.#setClickListener()
+      this.#setPopstateListener()
+    } else if (handler === this.#handler) return
 
     this.#handler = handler
-    this.#setClickListener()
-    this.#setPopstateListener()
-
     this.#handleRoute().catch(console.log)
   }
 
