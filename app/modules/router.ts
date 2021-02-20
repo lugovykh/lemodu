@@ -59,12 +59,12 @@ export default class Router {
 
   get handler (): PageHandler | undefined { return this.#handler }
   set handler (handler: PageHandler | undefined) {
-    this.#handler = handler
+    if (handler == null) return
 
-    if (handler != null) {
-      this.#addClickListener()
-      this.#addPopstateListener()
-    }
+    this.#handler = handler
+    this.#setClickListener()
+    this.#setPopstateListener()
+
     this.#handleRoute().catch(console.log)
   }
 
@@ -72,31 +72,50 @@ export default class Router {
     await this.#handler?.(page ?? await this.getPage())
   }
 
-  #addClickListener = (): void => {
-    const handleClick = async (e: MouseEvent): Promise<void> => {
-      if (e.altKey || e.ctrlKey || e.shiftKey) return
+  #handleClick = async (e: MouseEvent): Promise<void> => {
+    if (e.altKey || e.ctrlKey || e.shiftKey) return
 
-      const link = e.composedPath().find(isLink)
+    const link = e.composedPath().find(isLink)
+    if (link == null) return
 
-      if (link == null) return
-
-      e.preventDefault()
-      await this.go(link as Link)
-    }
-
-    addEventListener('click', e => {
-      this.#addClickListener()
-      handleClick(e).catch(console.log)
-    }, { once: true })
+    e.preventDefault()
+    await this.go(link as Link)
   }
 
-  #addPopstateListener = (): void => {
-    const handlePopstate = this.#handleRoute
+  #clickListener = (e: MouseEvent): void => {
+    this.#deleteClickListener?.()
+    this.#setClickListener()
 
-    addEventListener('popstate', () => {
-      this.#addPopstateListener()
-      handlePopstate().catch(console.log)
-    }, { once: true })
+    this.#handleClick(e).catch(console.log)
+  }
+
+  #deleteClickListener?: () => void
+  #setClickListener = (): void => {
+    if (this.#deleteClickListener != null) return
+
+    this.#deleteClickListener = () => {
+      this.#deleteClickListener = undefined
+      removeEventListener('click', this.#clickListener)
+    }
+    addEventListener('click', this.#clickListener, { once: true })
+  }
+
+  #popstateListener = (): void => {
+    this.#deletePopstateListener?.()
+    this.#setPopstateListener()
+
+    this.#handleRoute().catch(console.log)
+  }
+
+  #deletePopstateListener?: () => void
+  #setPopstateListener = (): void => {
+    if (this.#deletePopstateListener != null) return
+
+    this.#deletePopstateListener = () => {
+      this.#deletePopstateListener = undefined
+      removeEventListener('popstate', this.#popstateListener)
+    }
+    addEventListener('popstate', this.#popstateListener, { once: true })
   }
 
   parsePathes (pathTree = this.pathTree): Pathes {
