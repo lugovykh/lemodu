@@ -17,6 +17,7 @@ export interface PageModule {
   pathTree?: PathTree
   generate: (params: PageParams) => Page | Promise<Page>
 }
+type PageHandler = (page: Page) => void | Promise<void>
 
 export interface Link {
   href?: string
@@ -44,26 +45,31 @@ export function normalizePathname (pathname = location.pathname): string {
 
 export default class Router {
   pathTree: PathTree
-  handler?: (page: Page) => void | Promise<void>
+  #handler?: PageHandler
 
-  constructor ({
-    pathTree = ['page'],
-    handler
-  }: Partial<Router>) {
-    this.pathTree = pathTree
-    this.handler = handler
-
-    this.#addClickListener()
-    this.#addPopstateListener()
+  constructor (routerParams?: Partial<Router>) {
+    const { pathTree = ['page'], handler } = routerParams ?? {}
 
     history.replaceState(
       null, '', `${normalizePathname()}${location.search}${location.hash}`
     )
+    this.pathTree = pathTree
+    this.handler = handler
+  }
+
+  get handler (): PageHandler | undefined { return this.#handler }
+  set handler (handler: PageHandler | undefined) {
+    this.#handler = handler
+
+    if (handler != null) {
+      this.#addClickListener()
+      this.#addPopstateListener()
+    }
     this.#handleRoute().catch(console.log)
   }
 
   #handleRoute = async (page?: Page): Promise<void> => {
-    await this.handler?.(page ?? await this.getPage())
+    await this.#handler?.(page ?? await this.getPage())
   }
 
   #addClickListener = (): void => {
@@ -153,8 +159,9 @@ export default class Router {
         remainingBranches = pathEntry[paramKey]
       }
     }
-
-    const searchParams = Object.fromEntries(new URLSearchParams(search))
+    const searchParams = search != null
+      ? Object.fromEntries(new URLSearchParams(search))
+      : undefined
 
     return { remainingPathname, ...pathParams, ...searchParams }
   }
