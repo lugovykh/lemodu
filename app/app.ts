@@ -28,13 +28,10 @@ template.innerHTML = `
   <slot name="footer"></slot>
 `
 
-export interface AppStructure {
-  [section: string]: SectionStructure
-}
-
 interface SectionStructure {
   [slot: string]: () => Element[] | Promise<Element[]>
 }
+interface AppStructure { [section: string]: SectionStructure }
 
 export interface Page {
   name: string
@@ -43,11 +40,7 @@ export interface Page {
   structure: AppStructure
 }
 
-export interface PageStructure {
-  [slot: string]: Element[]
-}
-
-let router: Router
+const router = new Router()
 const staticStructure: AppStructure = {
   header: {
     content: () => [new Menu()]
@@ -91,17 +84,15 @@ class App extends HTMLElement {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    router = new Router({
-      handler: async ({ title, description, structure }: Page) => {
-        this.structure = { ...staticStructure, ...structure }
+    router.handler = async ({ title, description, structure }: Page) => {
+      this.structure = { ...staticStructure, ...structure }
 
-        document.title = `${title} — ${appName}`
-        setDocumentDescription(description)
-        sessionStorage.setItem('pageTitle', document.title)
+      document.title = `${title} — ${appName}`
+      setDocumentDescription(description)
+      sessionStorage.setItem('pageTitle', document.title)
 
-        await this.render()
-      }
-    })
+      await this.render()
+    }
   }
 
   async render (): Promise<void> {
