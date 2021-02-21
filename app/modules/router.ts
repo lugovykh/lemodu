@@ -4,8 +4,8 @@ type ParamKey = string
 interface ParamValues { [paramKey: string]: string[] }
 export type PathTree = Array<ParamKey | ParamValues | PathTree>
 
-interface PathEntry { [paramKey: string]: PathTree }
-interface Pathes { [paramValue: string]: PathEntry }
+interface BranchEntry { [paramKey: string]: PathTree }
+interface Branches { [paramValue: string]: BranchEntry }
 
 interface RouteParams {
   page?: string
@@ -42,8 +42,8 @@ export default class Router {
   pathTree: PathTree
   #handler?: PageHandler
 
-  constructor (routerParams?: Partial<Router>) {
-    const { pathTree = ['page'], handler } = routerParams ?? {}
+  constructor (routerParams: Partial<Router> = {}) {
+    const { pathTree = ['page'], handler } = routerParams
 
     history.replaceState(
       null, '', `${normalizePathname()}${location.search}${location.hash}`
@@ -118,8 +118,8 @@ export default class Router {
     addEventListener('popstate', this.#popstateListener, { once: true })
   }
 
-  parsePathes (pathTree = this.pathTree): Pathes {
-    const pathes: Pathes = {}
+  parseBranches (pathTree = this.pathTree): Branches {
+    const branches: Branches = {}
 
     for (const point of pathTree) {
       const remainingBranches: PathTree = []
@@ -127,37 +127,40 @@ export default class Router {
       if (Array.isArray(point)) {
         const branching = point
 
-        Object.assign(pathes, this.parsePathes(branching))
+        Object.assign(branches, this.parseBranches(branching))
         remainingBranches.push(...point.slice(1))
       } else if (typeof point === 'string') {
         const paramKey = point
         const anyValue = '*'
 
-        pathes[anyValue] = { [paramKey]: remainingBranches }
+        branches[anyValue] = { [paramKey]: remainingBranches }
       } else {
         for (const paramKey in point) {
           const validValues = point[paramKey]
 
           for (const value of validValues) {
-            pathes[value] = { [paramKey]: remainingBranches }
+            branches[value] = { [paramKey]: remainingBranches }
           }
         }
       }
       remainingBranches.push(...pathTree.slice(1))
     }
-    return pathes
+    return branches
   }
 
   parseParams (
-    { pathname = '', search = '' }: Link = location,
+    { pathname = '', search = '', searchParams }: Link = location,
     pathTree = this.pathTree
   ): RouteParams & PageParams {
+    pathname = normalizePathname(pathname)
+    searchParams ??= new URLSearchParams(search)
+    const searchEntries = Object.fromEntries(searchParams)
+
     if (pathname.startsWith('/')) pathname = pathname.slice(1)
-    if (pathname.endsWith('/')) pathname = pathname.slice(0, -1)
-    if (pathname === '') return {}
+    if (pathname === '') return { ...searchEntries }
 
     const pathValues = pathname.split('/')
-    const pathParams: PageParams = {}
+    const pathEntries: PageParams = {}
 
     let remainingBranches = pathTree
     let remainingPathname = ''
@@ -167,21 +170,21 @@ export default class Router {
         remainingPathname += `/${value}`
         continue
       }
-      const currentPathes = this.parsePathes(remainingBranches)
-      const pathEntry = currentPathes[value] ?? currentPathes['*']
+      const currentBranch = this.parseBranches(remainingBranches)
+      const branchEntry = currentBranch[value] ?? currentBranch['*']
 
-      if (pathEntry == null) throw new URIError(String(remainingBranches))
+      if (branchEntry == null) throw new URIError(String(remainingBranches))
 
-      for (const paramKey in pathEntry) {
-        pathParams[paramKey] = value
-        remainingBranches = pathEntry[paramKey]
+      for (const paramKey in branchEntry) {
+        pathEntries[paramKey] = value
+        remainingBranches = branchEntry[paramKey]
       }
     }
-    const searchParams = search !== ''
-      ? Object.fromEntries(new URLSearchParams(search))
-      : undefined
-
-    return { remainingPathname, ...pathParams, ...searchParams }
+    return {
+      ...pathEntries,
+      ...searchEntries,
+      remainingPathname
+    }
   }
 
   async getPage ({ pathname, search }: Link = location): Promise<Page> {
