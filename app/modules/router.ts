@@ -209,10 +209,13 @@ export default class Router {
     return await generate({ ...basicParams, ...pageParams })
   }
 
-  async go ({ href, pathname, search, hash }: Link): Promise<void> {
-    const uriString = href ??
-      `${normalizePathname(pathname ?? '')}${search ?? ''}${hash ?? ''}`
-    const uriObject = new URL(uriString, href ?? location.origin)
+  async go ({
+    href, origin = location.origin,
+    pathname = '', search = '', hash = ''
+  }: Link): Promise<void> {
+    const uriString = href ?? `${pathname}${search}${hash}`
+    const uriObject = new URL(uriString, href ?? origin)
+    uriObject.pathname = normalizePathname(pathname)
 
     if (uriObject.href === location.href) return
 
