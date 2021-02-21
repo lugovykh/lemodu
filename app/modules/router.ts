@@ -19,12 +19,7 @@ export interface PageModule {
 }
 type PageHandler = (page: Page) => void | Promise<void>
 
-export interface Link {
-  href?: string
-  pathname?: string
-  search?: string
-  hash?: string
-}
+export type Link = Partial<URL>
 
 export function isLink (target: unknown): boolean {
   if (
@@ -59,15 +54,16 @@ export default class Router {
 
   get handler (): PageHandler | undefined { return this.#handler }
   set handler (handler: PageHandler | undefined) {
-    if (handler == null) {
+    if (handler === this.#handler) {
+      return
+    } else if (handler == null) {
       this.#deleteClickListener?.()
       this.#deletePopstateListener?.()
       return
     } else if (this.#handler == null) {
       this.#setClickListener()
       this.#setPopstateListener()
-    } else if (handler === this.#handler) return
-
+    }
     this.#handler = handler
     this.#handleRoute().catch(console.log)
   }
@@ -126,39 +122,38 @@ export default class Router {
     const pathes: Pathes = {}
 
     for (const point of pathTree) {
-      const remainingPath: PathTree = []
+      const remainingBranches: PathTree = []
 
       if (Array.isArray(point)) {
-        const branchingPath = point
+        const branching = point
 
-        Object.assign(pathes, this.parsePathes(branchingPath))
-        remainingPath.push(...point.slice(1))
+        Object.assign(pathes, this.parsePathes(branching))
+        remainingBranches.push(...point.slice(1))
       } else if (typeof point === 'string') {
         const paramKey = point
         const anyValue = '*'
 
-        pathes[anyValue] = { [paramKey]: remainingPath }
+        pathes[anyValue] = { [paramKey]: remainingBranches }
       } else {
         for (const paramKey in point) {
           const validValues = point[paramKey]
 
           for (const value of validValues) {
-            pathes[value] = { [paramKey]: remainingPath }
+            pathes[value] = { [paramKey]: remainingBranches }
           }
         }
       }
-      remainingPath.push(...pathTree.slice(1))
+      remainingBranches.push(...pathTree.slice(1))
     }
     return pathes
   }
 
   parseParams (
-    { pathname = '', search }: Link = location,
+    { pathname = '', search = '' }: Link = location,
     pathTree = this.pathTree
   ): RouteParams & PageParams {
-    if (pathname.startsWith('/')) {
-      pathname = pathname.slice(1)
-    }
+    if (pathname.startsWith('/')) pathname = pathname.slice(1)
+    if (pathname.endsWith('/')) pathname = pathname.slice(0, -1)
     if (pathname === '') return {}
 
     const pathValues = pathname.split('/')
@@ -172,8 +167,8 @@ export default class Router {
         remainingPathname += `/${value}`
         continue
       }
-      const pathes = this.parsePathes(remainingBranches)
-      const pathEntry = pathes[value] ?? pathes['*']
+      const currentPathes = this.parsePathes(remainingBranches)
+      const pathEntry = currentPathes[value] ?? currentPathes['*']
 
       if (pathEntry == null) throw new URIError(String(remainingBranches))
 
@@ -182,7 +177,7 @@ export default class Router {
         remainingBranches = pathEntry[paramKey]
       }
     }
-    const searchParams = search != null
+    const searchParams = search !== ''
       ? Object.fromEntries(new URLSearchParams(search))
       : undefined
 
@@ -202,11 +197,11 @@ export default class Router {
     } = await import(`../pages/${page}.js`) as PageModule
 
     const {
-      remainingPathname: impossibleTail = '',
+      remainingPathname: invalidRemainder = '',
       ...pageParams
     } = this.parseParams({ pathname: remainingPathname, search }, pathTree)
 
-    if (impossibleTail !== '') throw new URIError(impossibleTail)
+    if (invalidRemainder !== '') throw new URIError(invalidRemainder)
 
     return await generate({ ...basicParams, ...pageParams })
   }
