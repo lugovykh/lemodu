@@ -187,7 +187,9 @@ export default class Router {
     }
   }
 
-  async getPage ({ pathname, search }: Link = location): Promise<Page> {
+  async getPage (
+    { pathname, ...restUriProps }: Link = location
+  ): Promise<Page> {
     const {
       page = 'main',
       remainingPathname,
@@ -202,8 +204,10 @@ export default class Router {
     const {
       remainingPathname: invalidRemainder = '',
       ...pageParams
-    } = this.parseParams({ pathname: remainingPathname, search }, pathTree)
-
+    } = this.parseParams(
+      { pathname: remainingPathname, ...restUriProps },
+      pathTree
+    )
     if (invalidRemainder !== '') throw new URIError(invalidRemainder)
 
     return await generate({ ...basicParams, ...pageParams })
