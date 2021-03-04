@@ -149,7 +149,7 @@ export default class Router {
   }
 
   parseParams (
-    { pathname = '', search = '', searchParams }: Link = location,
+    { pathname = '', search, searchParams }: Link = location,
     pathTree = this.pathTree
   ): RouteParams & PageParams {
     pathname = normalizePathname(pathname)
@@ -173,9 +173,13 @@ export default class Router {
       const currentBranch = this.parseBranches(remainingBranches)
       const branchEntry = currentBranch[value] ?? currentBranch['*']
 
-      if (branchEntry == null) throw new URIError(String(remainingBranches))
-
+      if (branchEntry == null) {
+        throw new URIError(`Unknown branch: ${String(remainingBranches)}`)
+      }
       for (const paramKey in branchEntry) {
+        if (paramKey in searchEntries) {
+          throw new URIError(`Same parameter in path and search: ${paramKey}`)
+        }
         pathEntries[paramKey] = value
         remainingBranches = branchEntry[paramKey]
       }
@@ -191,7 +195,7 @@ export default class Router {
     { pathname, ...restUriProps }: Link = location
   ): Promise<Page> {
     const {
-      page = 'main',
+      page = 'home',
       remainingPathname,
       ...basicParams
     } = this.parseParams({ pathname })
@@ -208,7 +212,9 @@ export default class Router {
       { pathname: remainingPathname, ...restUriProps },
       pathTree
     )
-    if (invalidRemainder !== '') throw new URIError(invalidRemainder)
+    if (invalidRemainder !== '') {
+      throw new URIError(`Invalid remainder: (${invalidRemainder})`)
+    }
 
     return await generate({ ...basicParams, ...pageParams })
   }
