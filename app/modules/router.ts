@@ -59,7 +59,6 @@ export default class Router {
     } else if (handler == null) {
       this.#deleteClickListener?.()
       this.#deletePopstateListener?.()
-      return
     } else if (this.#handler == null) {
       this.#setClickListener()
       this.#setPopstateListener()
@@ -82,40 +81,32 @@ export default class Router {
     await this.go(link as Link)
   }
 
-  #clickListener = (e: MouseEvent): void => {
-    this.#deleteClickListener?.()
-    this.#setClickListener()
-
-    this.#handleClick(e).catch(console.log)
-  }
-
   #deleteClickListener?: () => void
   #setClickListener = (): void => {
     if (this.#deleteClickListener != null) return
 
+    const clickListener = (e: MouseEvent): void => {
+      this.#handleClick(e).catch(console.log)
+    }
     this.#deleteClickListener = () => {
       this.#deleteClickListener = undefined
-      removeEventListener('click', this.#clickListener)
+      removeEventListener('click', clickListener)
     }
-    addEventListener('click', this.#clickListener, { once: true })
-  }
-
-  #popstateListener = (): void => {
-    this.#deletePopstateListener?.()
-    this.#setPopstateListener()
-
-    this.#handleRoute().catch(console.log)
+    addEventListener('click', clickListener)
   }
 
   #deletePopstateListener?: () => void
   #setPopstateListener = (): void => {
     if (this.#deletePopstateListener != null) return
 
+    const popstateListener = (): void => {
+      this.#handleRoute().catch(console.log)
+    }
     this.#deletePopstateListener = () => {
       this.#deletePopstateListener = undefined
-      removeEventListener('popstate', this.#popstateListener)
+      removeEventListener('popstate', popstateListener)
     }
-    addEventListener('popstate', this.#popstateListener, { once: true })
+    addEventListener('popstate', popstateListener)
   }
 
   parseBranches (pathTree = this.pathTree): Branches {
@@ -234,6 +225,9 @@ export default class Router {
     await this.#handleRoute(page)
   }
 
+  /**
+   * @deprecated The method should not be used
+   */
   generateUri (params: PageParams): string {
     const pathEntries = []
     const searchEntries = new URLSearchParams()
