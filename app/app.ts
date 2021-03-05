@@ -83,7 +83,6 @@ class App extends HTMLElement {
       styleSheet.replaceSync(styles)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     router.handler = async ({ title, description, structure }: Page) => {
       this.structure = { ...staticStructure, ...structure }
 
