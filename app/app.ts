@@ -52,7 +52,6 @@ const appName = 'Noname'
 function setDocumentDescription (description: string): void {
   const maxLength = 155
   const { head } = document
-<<<<<<< HEAD
   let unknownDescription = head.children.namedItem('description')
   let documentDescription: HTMLMetaElement
 
@@ -66,21 +65,6 @@ function setDocumentDescription (description: string): void {
   }
   documentDescription ??= document.createElement('meta')
   if (unknownDescription == null) {
-=======
-  let someDescription = head.children.namedItem('description')
-  let documentDescription: HTMLMetaElement
-
-  if (someDescription instanceof HTMLMetaElement) {
-    documentDescription = someDescription
-  } else if (someDescription != null) {
-    someDescription = head.querySelector('meta[name=description]')
-    if (someDescription instanceof HTMLMetaElement) {
-      documentDescription = someDescription
-    }
-  }
-  documentDescription ??= document.createElement('meta')
-  if (someDescription == null) {
->>>>>>> bd9e51ae8ff126cb484d0e839bc66e26bf7e97b9
     documentDescription.name = 'description'
     head.append(documentDescription)
   }
