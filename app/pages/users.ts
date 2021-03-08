@@ -9,6 +9,9 @@ interface Data {
   _id: { $oid: string }
   [key: string]: unknown
 }
+interface UsersData extends Data {
+  nickname: string
+}
 
 interface PageParams {
   id: string
@@ -40,7 +43,7 @@ export async function generate (
     (id !== '' ? `/${id}` : '') +
     '?data'
   )
-  const data: Data | Data[] = await dataResponse.json()
+  const data: UsersData | UsersData[] = await dataResponse.json()
   let content: () => Element[]
   schema ??= await (await schemaResponse).json()
 
