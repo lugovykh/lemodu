@@ -1,4 +1,5 @@
 import type { Page } from '../app'
+import type { PathTree, PageParams } from '../modules/router'
 
 import Datacard, {
   DatacardStructure,
@@ -9,9 +10,13 @@ interface Data {
   _id: { $oid: string }
   [key: string]: unknown
 }
+interface UsersData extends Data {
+  nickname: string
+}
 
-interface PageParams {
-  id: string
+interface UsersParams {
+  id?: string
+  action?: string
 }
 
 const name = 'users'
@@ -24,23 +29,23 @@ const datacardStructure: DatacardStructure = {
   content: 'about'
 }
 
-export const pathTree = [
+export const pathTree: PathTree = [
   [{ action: ['add'] }],
-  ['id', { action: ['edit', 'delete'] }]
+  ['id', { action: ['edit'] }]
 ]
 
 export async function generate (
-  pageParams: PageParams
+  { id, action, ...remainingParams }: PageParams & UsersParams
 ): Promise<Page> {
   let title: string
   let description: string
-  const { id = '' } = pageParams
+
   const dataResponse = await fetch(
     `/${name}` +
-    (id !== '' ? `/${id}` : '') +
+    (id != null ? `/${id}` : '') +
     '?data'
   )
-  const data: Data | Data[] = await dataResponse.json()
+  const data: UsersData | UsersData[] = await dataResponse.json()
   let content: () => Element[]
   schema ??= await (await schemaResponse).json()
 
