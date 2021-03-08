@@ -64,18 +64,16 @@ function setDocumentDescription (description: string): void {
 }
 
 class App extends HTMLElement {
-  structure: AppStructure
+  structure?: AppStructure
   #currentStructure?: AppStructure
 
   constructor () {
     super()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const shadow: any = this.attachShadow({ mode: 'open' })
-    shadow.adoptedStyleSheets = [styleSheet]
-    shadow.append(template.content.cloneNode(true))
-
-    this.structure = staticStructure
+    const shadowRoot: any = this.attachShadow({ mode: 'open' })
+    shadowRoot.adoptedStyleSheets = [styleSheet]
+    shadowRoot.append(template.content.cloneNode(true))
   }
 
   async connectedCallback (): Promise<void> {
@@ -84,8 +82,16 @@ class App extends HTMLElement {
     }
 
     router.handler = async ({ title, description, structure }: Page) => {
-      this.structure = { ...staticStructure, ...structure }
+      this.structure = { ...staticStructure }
+      for (const sectionName in structure) {
+        const staticSectionStructure = staticStructure[sectionName]
+        const sectionStructure = structure[sectionName]
 
+        this.structure[sectionName] = {
+          ...staticSectionStructure,
+          ...sectionStructure
+        }
+      }
       document.title = `${title} — ${appName}`
       setDocumentDescription(description)
       sessionStorage.setItem('pageTitle', document.title)
@@ -97,13 +103,13 @@ class App extends HTMLElement {
   async render (): Promise<void> {
     const { structure } = this
 
-    for (const id in structure) {
-      const currentSectionStructure = this.#currentStructure?.[id]
-      const sectionStructure = structure[id]
-      let section = this.children.namedItem(id)
+    for (const sectionName in structure) {
+      const currentSectionStructure = this.#currentStructure?.[sectionName]
+      const sectionStructure = structure[sectionName]
+      let section = this.children.namedItem(sectionName)
 
       if (section == null) {
-        switch (id) {
+        switch (sectionName) {
           case 'header':
             section = new Header()
             break
@@ -113,20 +119,18 @@ class App extends HTMLElement {
           default:
             section = document.createElement('section')
         }
-        section.id = id
+        section.id = sectionName
         this.append(section)
       }
 
       if (sectionStructure !== currentSectionStructure) {
-        section.textContent = ''
-
-        for (const slot in sectionStructure) {
-          const slotContent = await sectionStructure[slot]()
+        for (const slotName in sectionStructure) {
+          const slotContent = await sectionStructure[slotName]()
 
           for (const element of slotContent) {
-            if (slot !== 'content') element.slot = slot
-            section.append(element)
+            if (slotName !== 'content') element.slot = slotName
           }
+          section.replaceChildren(...slotContent)
         }
       }
     }
