@@ -49,7 +49,7 @@ const staticStructure: AppStructure = {
 
 const appName = 'Noname'
 
-function setDocumentDescription (description: string): void {
+function setDocumentDescription (content: string): void {
   const maxLength = 155
   const { head } = document
   let unknownDescription = head.children.namedItem('description')
@@ -68,7 +68,7 @@ function setDocumentDescription (description: string): void {
     documentDescription.name = 'description'
     head.append(documentDescription)
   }
-  documentDescription.content = description.substr(0, maxLength)
+  documentDescription.content = content.substr(0, maxLength)
 }
 
 class App extends HTMLElement {
