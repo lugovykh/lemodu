@@ -109,7 +109,7 @@ export default class Router {
     addEventListener('popstate', popstateListener)
   }
 
-  parseBranches (pathTree = this.pathTree): Branches {
+  parseBranches (pathTree = this.pathTree, anyValue = '*'): Branches {
     const branches: Branches = {}
 
     for (const point of pathTree) {
@@ -122,7 +122,6 @@ export default class Router {
         remainingBranches.push(...branching.slice(1))
       } else if (typeof point === 'string') {
         const paramKey = point
-        const anyValue = '*'
 
         branches[anyValue] = { [paramKey]: remainingBranches }
       } else {
@@ -130,6 +129,9 @@ export default class Router {
           const validValues = point[paramKey]
 
           for (const value of validValues) {
+            if (value === anyValue) {
+              throw new Error(`${paramKey} contains "${anyValue}" (anyValue)`)
+            }
             branches[value] = { [paramKey]: remainingBranches }
           }
         }
