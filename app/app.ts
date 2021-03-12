@@ -64,11 +64,12 @@ function setDocumentDescription (content: string): void {
     }
   }
   documentDescription ??= document.createElement('meta')
+  documentDescription.name = 'description'
+  documentDescription.content = content.substr(0, maxLength)
+
   if (unknownDescription == null) {
-    documentDescription.name = 'description'
     head.append(documentDescription)
   }
-  documentDescription.content = content.substr(0, maxLength)
 }
 
 class App extends HTMLElement {
