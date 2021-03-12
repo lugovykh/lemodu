@@ -1,4 +1,5 @@
 import Router from './modules/router.js'
+import { documentMeta } from './modules/document-meta.js'
 
 import Header from './modules/header.js'
 import Main from './modules/main.js'
@@ -49,29 +50,6 @@ const staticStructure: AppStructure = {
 
 const appName = 'Noname'
 
-function setDocumentDescription (content: string): void {
-  const maxLength = 155
-  const { head } = document
-  let unknownDescription = head.children.namedItem('description')
-  let documentDescription: HTMLMetaElement
-
-  if (unknownDescription instanceof HTMLMetaElement) {
-    documentDescription = unknownDescription
-  } else if (unknownDescription != null) {
-    unknownDescription = head.querySelector('meta[name=description]')
-    if (unknownDescription instanceof HTMLMetaElement) {
-      documentDescription = unknownDescription
-    }
-  }
-  documentDescription ??= document.createElement('meta')
-  documentDescription.name = 'description'
-  documentDescription.content = content.substr(0, maxLength)
-
-  if (unknownDescription == null) {
-    head.append(documentDescription)
-  }
-}
-
 class App extends HTMLElement {
   structure?: AppStructure
   #currentStructure?: AppStructure
@@ -102,7 +80,7 @@ class App extends HTMLElement {
         }
       }
       document.title = `${title} — ${appName}`
-      setDocumentDescription(description)
+      documentMeta.description = description
       sessionStorage.setItem('pageTitle', document.title)
 
       await this.render()
