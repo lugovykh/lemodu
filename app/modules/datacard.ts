@@ -19,8 +19,8 @@ const styles = `
     color: var(--content-font-color);
     background-color: var(--content-background-color);
     border: var(--content-border);
-    border-radius: var(--main-border-radius);
-    box-shadow: var(--main-box-shadow);
+    border-radius: var(--content-border-radius);
+    box-shadow: var(--content-box-shadow);
     filter: drop-shadow(var(--content-drop-shadow));
   }
   ::slotted(h2) {

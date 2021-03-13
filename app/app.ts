@@ -16,9 +16,9 @@ const styles = `
       "footer";
     grid-template-rows: auto 1fr auto;
     gap: 2em;
-    font-family: var(--main-font-family);
-    color: var(--main-font-color);
-    background-color: var(--additional-background-color);
+    font-family: var(--ui-font-family);
+    color: var(--ui-font-color);
+    background-color: var(--background-color);
   }
 `
 const template = document.createElement('template')

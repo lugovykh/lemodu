@@ -5,7 +5,7 @@ const styles = `
     display: flex;
     line-height: 1.5;
     font-weight: 600;
-    color: var(--main-font-color);
+    color: var(--ui-font-color);
     font-variant: small-caps;
   }
   ::slotted(*) {

@@ -8,11 +8,11 @@ const styles = `
     position: sticky;
     z-index: 100;
     top: 0;
-    background-color: var(--main-background-color);
-    backdrop-filter: blur(var(--main-blur));
-    border-bottom: var(--main-border);
-    box-shadow: var(--main-box-shadow);
-    filter: drop-shadow(var(--main-drop-shadow));
+    background-color: var(--ui-background-color);
+    backdrop-filter: blur(var(--ui-blur));
+    border-bottom: var(--ui-border);
+    box-shadow: var(--ui-box-shadow);
+    filter: drop-shadow(var(--ui-drop-shadow));
   }
   ::slotted(*) {
     margin: 0 auto;
