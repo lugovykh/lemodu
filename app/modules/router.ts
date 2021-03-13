@@ -130,7 +130,7 @@ export default class Router {
 
           for (const value of validValues) {
             if (value === anyValue) {
-              throw new Error(`${paramKey} contains "${anyValue}" (anyValue)`)
+              throw new Error(`${paramKey} contains value used as anyValue`)
             }
             branches[value] = { [paramKey]: remainingBranches }
           }
@@ -158,13 +158,14 @@ export default class Router {
     let remainingBranches = pathTree
     let remainingPathname = ''
 
+    const anyValue = '*'
     for (const value of pathValues) {
       if (remainingBranches.length === 0) {
         remainingPathname += `/${value}`
         continue
       }
       const currentBranch = this.parseBranches(remainingBranches)
-      const branchEntry = currentBranch[value] ?? currentBranch['*']
+      const branchEntry = currentBranch[value] ?? currentBranch[anyValue]
 
       if (branchEntry == null) {
         throw new URIError(`Unknown branch: ${String(remainingBranches)}`)
