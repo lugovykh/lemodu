@@ -118,7 +118,7 @@ export default class Router {
       if (Array.isArray(point)) {
         const branching = point
 
-        Object.assign(branches, this.parseBranches(branching))
+        Object.assign(branches, this.parseBranches(branching, anyValue))
         remainingBranches.push(...branching.slice(1))
       } else if (typeof point === 'string') {
         const paramKey = point
