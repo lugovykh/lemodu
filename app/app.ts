@@ -51,8 +51,8 @@ const staticStructure: AppStructure = {
 const appName = 'Noname'
 
 class App extends HTMLElement {
-  structure?: AppStructure
   #currentStructure?: AppStructure
+  pageStructure?: AppStructure
 
   constructor () {
     super()
@@ -69,16 +69,8 @@ class App extends HTMLElement {
     }
 
     router.handler = async ({ title, description, structure }: Page) => {
-      this.structure = { ...staticStructure }
-      for (const sectionName in structure) {
-        const staticSectionStructure = staticStructure[sectionName]
-        const sectionStructure = structure[sectionName]
+      this.pageStructure = structure
 
-        this.structure[sectionName] = {
-          ...staticSectionStructure,
-          ...sectionStructure
-        }
-      }
       document.title = `${title} — ${appName}`
       documentMeta.description = description
       sessionStorage.setItem('pageTitle', document.title)
@@ -87,8 +79,25 @@ class App extends HTMLElement {
     }
   }
 
+  get structure (): AppStructure {
+    const { pageStructure } = this
+
+    const structure = { ...staticStructure }
+    for (const sectionName in pageStructure) {
+      const staticSectionStructure = staticStructure[sectionName]
+      const sectionStructure = pageStructure[sectionName]
+
+      structure[sectionName] = {
+        ...staticSectionStructure,
+        ...sectionStructure
+      }
+    }
+    return structure
+  }
+
   async render (): Promise<void> {
     const { structure } = this
+    if (structure === this.#currentStructure) return
 
     for (const sectionName in structure) {
       const currentSectionStructure = this.#currentStructure?.[sectionName]
@@ -121,7 +130,7 @@ class App extends HTMLElement {
         }
       }
     }
-    this.#currentStructure = { ...structure }
+    this.#currentStructure = structure
   }
 }
 
