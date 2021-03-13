@@ -1,22 +1,26 @@
 :root {
     /* font parameters */
-    --main-font-family: system-ui;
-    --content-font-family: var(--main-font-family);
-    --main-font-color: #2f2f2f;
-    --additional-font-color: #6f6f6f;
+    --ui-font-family: system-ui;
+    --ui-font-color: #2f2f2f;
     --title-font-color: #0f0f0f;
     --content-font-color: #2f2f2f;
+    --content-font-family: var(--ui-font-family);
+    --additional-font-color: #6f6f6f;
 
     /* container parameters */
-    --main-background-color: #fff;
-    --additional-background-color: teal;
+    --background-color: teal;
+    --ui-background-color: rgba(255,255,255,.9);
+    --ui-border: none;
+    --ui-border-radius: 8px;
+    --ui-box-shadow: none;
     --content-background-color: #fff;
-    --main-border: none;
-    --main-border-radius: 1ch;
-    --main-box-shadow: none;
+    --content-border: none;
+    --content-border-radius: 8px;
+    --content-box-shadow: none;
 
     /* filters */
-    --main-blur: 0;
-    --main-drop-shadow: 0 8px 16px rgba(0,0,0,.1);
-    --content-drop-shadow: 0 1px 2px rgba(0,0,0,.1);
+    --ui-blur: 8px;
+    --ui-drop-shadow: 0 4px 8px rgba(0,0,0,.2);
+    --content-blur: 0;
+    --content-drop-shadow: 0 1px 2px rgba(0,0,0,.2);
 }
