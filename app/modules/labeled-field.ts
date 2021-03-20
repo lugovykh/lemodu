@@ -8,7 +8,7 @@ const styles = `
   }
   #label {
     font-size: .8em;
-    color: var(--additional-font-color);
+    color: var(--additional-color);
   }
   [name=value] {
     font-weight: 600;

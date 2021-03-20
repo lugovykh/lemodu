@@ -16,8 +16,8 @@ const styles = `
     height: fit-content;
     justify-self: center;
     padding: 1em 2em;
-    color: var(--content-font-color);
-    background-color: var(--content-background-color);
+    color: var(--content-color);
+    background: var(--content-background);
     border: var(--content-border);
     border-radius: var(--content-border-radius);
     box-shadow: var(--content-box-shadow);
@@ -30,7 +30,7 @@ const styles = `
     font-size: 1.2em;
     font-weight: 600;
     font-variant: small-caps;
-    color: var(--title-font-color);
+    color: var(--title-color);
     white-space: nowrap;
     text-overflow: ellipsis;
   }

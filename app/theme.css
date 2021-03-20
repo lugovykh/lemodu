@@ -1,19 +1,19 @@
 :root {
     /* font parameters */
     --ui-font-family: system-ui;
-    --ui-font-color: #2f2f2f;
-    --title-font-color: #0f0f0f;
-    --content-font-color: #2f2f2f;
+    --ui-color: rgb(5%,5%,5%);
     --content-font-family: var(--ui-font-family);
-    --additional-font-color: #6f6f6f;
+    --title-color: rgb(0%,0%,0%);
+    --content-color: rgb(5%,5%,5%);
+    --additional-color: rgb(45%,45%,45%);
 
     /* container parameters */
-    --background-color: teal;
-    --ui-background-color: rgba(255,255,255,.9);
-    --ui-border: none;
+    --background: teal;
+    --ui-background: rgba(100%,100%,100%,.9);
+    --ui-border: 1px solid transparent;
     --ui-border-radius: 8px;
     --ui-box-shadow: none;
-    --content-background-color: #fff;
+    --content-background: #fff;
     --content-border: none;
     --content-border-radius: 8px;
     --content-box-shadow: none;
@@ -24,6 +24,10 @@
     --content-blur: 0;
     --content-drop-shadow: 0 1px 2px rgba(0,0,0,.2);
 
+    /* hover */
+    --ui-hover-background: rgba(85%,85%,85%,.5);
+    --ui-hover-border: 1px solid rgb(85%,85%,85%);
+
     /* visual effects */
-    --transition: all .25s ease-out;
+    --transition: all .12s ease-out;
 }

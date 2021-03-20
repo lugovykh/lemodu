@@ -17,8 +17,8 @@ const styles = `
     grid-template-rows: auto 1fr auto;
     gap: 2em;
     font-family: var(--ui-font-family);
-    color: var(--ui-font-color);
-    background-color: var(--background-color);
+    color: var(--ui-color);
+    background: var(--background);
   }
 `
 const template = document.createElement('template')

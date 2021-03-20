@@ -12,12 +12,12 @@ const styles = `
     overflow: hidden;
     white-space: nowrap;
     padding: .5em 1em;
+    border: var(--ui-border);
     transition: var(--transition);
   }
   ::slotted(*:hover) {
-    background-color: var(--ui-background-color);
-    box-shadow: var(--ui-box-shadow);
-    filter: drop-shadow(var(--ui-drop-shadow));
+    background: var(--ui-hover-background);
+    border: var(--ui-hover-border)
   }
 `
 const template = document.createElement('template')

@@ -8,7 +8,7 @@ const styles = `
     position: sticky;
     z-index: 100;
     top: 0;
-    background-color: var(--ui-background-color);
+    background: var(--ui-background);
     backdrop-filter: blur(var(--ui-blur));
     border-bottom: var(--ui-border);
     box-shadow: var(--ui-box-shadow);
