@@ -12,6 +12,12 @@ const styles = `
     overflow: hidden;
     white-space: nowrap;
     padding: .5em 1em;
+    transition: var(--transition);
+  }
+  ::slotted(*:hover) {
+    background-color: var(--ui-background-color);
+    box-shadow: var(--ui-box-shadow);
+    filter: drop-shadow(var(--ui-drop-shadow));
   }
 `
 const template = document.createElement('template')
