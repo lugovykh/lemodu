@@ -1,4 +1,4 @@
-import type { JsonSchema, JsonSchemaObject } from '../schemas/json-schema'
+import type { JsonSchema, JsonSchemaObject } from './json-schema'
 
 export function createFormField (
   name: string,
