@@ -1,6 +1,8 @@
 import type { Page } from '../app'
 import type { PathTree, PageParams } from '../modules/router'
 
+import Collection from '../modules/collection.js'
+
 import Datacard, {
   DatacardStructure,
   JsonSchemaObject
@@ -54,8 +56,7 @@ export async function generate (
     title = 'News'
     description = 'Latest news of this site'
     content = () => {
-      const slotContent = document.createElement('div')
-      slotContent.classList.add('collection')
+      const slotContent = new Collection()
 
       for (const entry of data) {
         const contentItem = new Datacard({
