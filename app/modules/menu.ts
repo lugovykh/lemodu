@@ -7,6 +7,7 @@ const styles = `
     font-weight: 600;
     color: var(--ui-font-color);
     font-variant: small-caps;
+    user-select: var(--ui-user-select);
   }
   ::slotted(*) {
     overflow: hidden;
@@ -14,6 +15,7 @@ const styles = `
     padding: .5em 1em;
     border: var(--ui-border);
     transition: var(--transition);
+    -webkit-user-drag: var(--ui-webkit-user-drag)
   }
   ::slotted(*:hover) {
     background: var(--ui-hover-background);
