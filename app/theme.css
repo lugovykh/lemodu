@@ -28,6 +28,8 @@
     --ui-hover-background: rgba(85%,85%,85%,.5);
     --ui-hover-border: 1px solid rgb(85%,85%,85%);
 
-    /* visual effects */
+    /* visual */
+    --ui-user-select: none;
+    --ui-webkit-user-drag: none;
     --transition: all .12s ease-out;
 }
