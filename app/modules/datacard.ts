@@ -173,8 +173,8 @@ export default class Datacard extends HTMLElement {
     if (data == null || structure == null || schema == null) return
 
     if (this.classList.contains('edit')) {
-      const { createForm } = await import('./create-form.js')
-      this.append(createForm(schema))
+      const { generateForm } = await import('./generate-form.js')
+      this.append(generateForm(schema))
     } else {
       const props: Record<string, FieldProps> = {}
       if (this.href != null && structure?.title != null) {

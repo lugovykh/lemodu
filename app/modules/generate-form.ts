@@ -1,6 +1,6 @@
 import type { JsonSchema, JsonSchemaObject } from './json-schema'
 
-export function createFormField (
+export function generateFormField (
   name: string,
   schema: JsonSchema
 ): DocumentFragment {
@@ -33,12 +33,12 @@ export function createFormField (
   return field
 }
 
-export function createForm (schema: JsonSchemaObject): HTMLFormElement {
+export function generateForm (schema: JsonSchemaObject): HTMLFormElement {
   const form = document.createElement('form')
   for (const [fieldName, fieldSchema]
     of Object.entries(schema.properties)
   ) {
-    form.append(createFormField(fieldName, fieldSchema))
+    form.append(generateFormField(fieldName, fieldSchema))
   }
   return form
 }
