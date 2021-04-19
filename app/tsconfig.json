@@ -13,11 +13,6 @@
     "sourceMap": true,
     "outDir": ".bin"
   },
-  "watchOptions": {
-    "watchFile": "useFsEvents",
-    "watchDirectory": "useFsEvents",
-    "fallbackPolling": "dynamicPriority"
-  },
   "include": [
     "**/*"
   ]
