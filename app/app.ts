@@ -1,8 +1,7 @@
 import Router from './modules/router.js'
-import { documentMeta } from './modules/document-meta.js'
 
-import Header from './modules/header.js'
-import Main from './modules/main.js'
+import { Page, mergePageParts, renderPage } from './modules/page.js'
+
 import Menu from './modules/menu.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,6 +19,28 @@ const styles = `
     color: var(--ui-color);
     background: var(--background);
   }
+  [name=header]::slotted(header) {
+    grid-area: header;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    flex-flow: row;
+    justify-content: space-around;
+    background: var(--ui-background);
+    backdrop-filter: blur(var(--ui-blur));
+    border-bottom: var(--ui-border);
+    box-shadow: var(--ui-box-shadow);
+    filter: drop-shadow(var(--ui-drop-shadow));
+  }
+  #content::slotted(main) {
+    grid-area: content;
+    display: grid;
+    grid-template-columns: 1fr;
+    place-content: start center;
+    padding: 0 2em;
+    gap: 2em;
+  }
 `
 const template = document.createElement('template')
 template.innerHTML = `
@@ -29,30 +50,31 @@ template.innerHTML = `
   <slot name="footer"></slot>
 `
 
-interface SectionStructure {
-  [slot: string]: () => Element[] | Promise<Element[]>
-}
-interface AppStructure { [section: string]: SectionStructure }
-
-export interface Page {
-  name: string
-  title: string
-  description: string
-  structure: AppStructure
-}
-
 const router = new Router()
-const staticStructure: AppStructure = {
-  header: {
-    content: () => [new Menu()]
+
+const appName = 'App'
+const appDescription = 'Designed With ❤'
+
+const initialPagePart: Page = {
+  title: document.title,
+  description: appDescription,
+  render: () => app,
+  structure: {
+    header: {
+      render: (used) => used ?? document.createElement('header'),
+      properties: { slot: 'header' },
+      structure: {
+        mainMenu: (used) => used ?? new Menu()
+      }
+    },
+    main: {
+      render: (used) => used ?? document.createElement('main')
+    }
   }
 }
 
-const appName = 'Noname'
-
 class App extends HTMLElement {
-  #currentStructure?: AppStructure
-  pageStructure?: AppStructure
+  page?: Page
 
   constructor () {
     super()
@@ -67,70 +89,23 @@ class App extends HTMLElement {
     if (styleSheet.cssRules.length === 0) {
       styleSheet.replaceSync(styles)
     }
+    router.handler = async (page) => {
+      page.title = `${page.title} — ${appName}`
+      sessionStorage.setItem('pageTitle', page.title)
 
-    router.handler = async ({ title, description, structure }: Page) => {
-      this.pageStructure = structure
-
-      document.title = `${title} — ${appName}`
-      documentMeta.description = description
-      sessionStorage.setItem('pageTitle', document.title)
-
+      this.page = page
       await this.render()
     }
-  }
-
-  get structure (): AppStructure {
-    const { pageStructure } = this
-
-    const structure = { ...staticStructure }
-    for (const sectionName in pageStructure) {
-      const staticSectionStructure = staticStructure[sectionName]
-      const sectionStructure = pageStructure[sectionName]
-
-      structure[sectionName] = {
-        ...staticSectionStructure,
-        ...sectionStructure
-      }
-    }
-    return structure
+    await this.render()
   }
 
   async render (): Promise<void> {
-    const { structure } = this
-    if (structure === this.#currentStructure) return
+    const { page: dynamicPagePart } = this
+    const mergedPage = dynamicPagePart != null
+      ? mergePageParts(initialPagePart, dynamicPagePart)
+      : initialPagePart
 
-    for (const sectionName in structure) {
-      const currentSectionStructure = this.#currentStructure?.[sectionName]
-      const sectionStructure = structure[sectionName]
-      let section = this.children.namedItem(sectionName)
-
-      if (section == null) {
-        switch (sectionName) {
-          case 'header':
-            section = new Header()
-            break
-          case 'main':
-            section = new Main()
-            break
-          default:
-            section = document.createElement('section')
-        }
-        section.id = sectionName
-        this.append(section)
-      }
-
-      if (sectionStructure !== currentSectionStructure) {
-        for (const slotName in sectionStructure) {
-          const slotContent = await sectionStructure[slotName]()
-
-          for (const element of slotContent) {
-            if (slotName !== 'content') element.slot = slotName
-          }
-          section.replaceChildren(...slotContent)
-        }
-      }
-    }
-    this.#currentStructure = structure
+    await renderPage(mergedPage)
   }
 }
 
