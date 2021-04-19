@@ -1,4 +1,4 @@
-import type { Page } from '../app'
+import type { Page } from '../modules/page'
 import type { PathTree, PageParams } from '../modules/router'
 
 import Collection from '../modules/collection.js'
@@ -9,7 +9,7 @@ import Datacard, {
 } from '../modules/datacard.js'
 
 interface Data {
-  _id: { $oid: string }
+  _id: string
   [key: string]: unknown
 }
 interface NewsData extends Data {
@@ -50,13 +50,13 @@ export async function generate (
   )
   const data: NewsData | NewsData[] = await dataResponse.json()
   schema ??= await (await schemaResponse).json()
-  let content: () => Element[]
+  let content: () => Element
 
   if (Array.isArray(data)) {
     title = 'News'
     description = 'Latest news of this site'
     content = () => {
-      const slotContent = new Collection()
+      const sectionContent = new Collection()
 
       for (const entry of data) {
         const contentItem = new Datacard({
@@ -64,28 +64,29 @@ export async function generate (
           schema,
           structure: datacardStructure
         })
-        contentItem.href = `/${name}/${entry._id.$oid}`
-        contentItem.id = entry._id.$oid
-        slotContent.append(contentItem)
+        contentItem.href = `/${name}/${entry._id}`
+        contentItem.id = entry._id
+        sectionContent.append(contentItem)
       }
-      return [slotContent]
+      return sectionContent
     }
   } else {
     title = String(data.title)
     description = String(data.content)
     content = () => {
-      const slotContent = new Datacard({
+      const sectionContent = new Datacard({
         data,
         schema,
         structure: datacardStructure
       })
-      return [slotContent]
+      return sectionContent
     }
   }
-  const structure = { main: { content } }
+  const structure = {
+    main: { structure: { content } }
+  }
 
   return {
-    name,
     title,
     description,
     structure
