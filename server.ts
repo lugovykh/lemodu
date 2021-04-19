@@ -1,6 +1,6 @@
-import { serve } from 'https://deno.land/std/http/server.ts'
-import * as path from 'https://deno.land/std/path/mod.ts'
-import { MongoClient, ObjectId } from 'https://deno.land/x/mongo@v0.12.1/mod.ts'
+import { serve } from 'https://deno.land/std@0.93.0/http/server.ts'
+import * as path from 'https://deno.land/std@0.93.0/path/mod.ts'
+import { MongoClient, Bson } from 'https://deno.land/x/mongo@v0.22.0/mod.ts'
 
 const hostname = 'localhost'
 const port = 8000
@@ -28,7 +28,7 @@ const MEDIA_TYPES: Record<string, string> = {
 }
 
 const client = new MongoClient()
-client.connectWithUri(`mongodb://${hostname}:27017`)
+await client.connect('mongodb://127.0.0.1:27017')
 const db = client.database('lemodu')
 
 const server = serve({ hostname, port })
@@ -38,10 +38,10 @@ for await (const req of server) {
   const { method } = req
   const url = new URL(req.url, base)
   let { dir, name, ext } = path.parse(url.pathname)
-  let data
+  let data: unknown
   const maxAge = 365 * 24 * 60 * 60
 
-  if (ext) {
+  if (ext !== '') {
     dir = path.join(sourceDir, dir)
   } else if (method === 'GET' && !url.searchParams.has('data')) {
     dir = sourceDir
@@ -50,22 +50,21 @@ for await (const req of server) {
   } else {
     if (dir === '/') {
       const collectionName = name
-      data = await db.collection(collectionName).find()
+      data = await db.collection(collectionName).find().toArray()
     } else {
       const collectionName = dir.slice(1)
-      const _id = ObjectId(name)
-      data = await db.collection(collectionName).findOne({ _id })
+      const id = new Bson.ObjectId(name)
+      data = await db.collection(collectionName).findOne({ _id: id })
     }
-    console.dir(data)
     ext = '.json'
   }
   const headers = new Headers()
   headers.set('Content-Type', MEDIA_TYPES[ext])
   headers.set(
     'Cache-Control',
-    `public, max-age=${maxAge}${maxAge ? ', immutable' : ''}`
+    `public, max-age=${maxAge}${maxAge > 0 ? ', immutable' : ''}`
   )
-  const body = data
+  const body = data != null
     ? JSON.stringify(data)
     : await Deno.open(path.format({ dir, name, ext }))
   req.respond({ headers, body })
