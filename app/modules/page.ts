@@ -1,15 +1,13 @@
 import { documentMeta } from './document-meta.js'
 
-type RenderElement = (
-  assignedElement?: Element
-) => Element | Promise<Element>
+type RenderElement = (previouslyUsed?: Element) => Element | Promise<Element>
 
 type SectionItem = RenderElement | Section
 interface SectionStructure { [sectionItem: string]: SectionItem }
-type ElementProps = Pick<Element, 'slot'>
+type ElementProps = Partial<Pick<Element, 'id' | 'className' | 'slot'>>
 
 export interface Section {
-  getWrapper?: RenderElement
+  render?: RenderElement
   properties?: ElementProps
   structure?: SectionStructure
 }
@@ -22,13 +20,13 @@ type ElementList = Map<string, WeakRef<Element>>
 type AssignedElements = WeakMap<RenderElement, ElementList>
 type RegistryEntry = [RenderElement, keyof ElementList]
 
-const getDefaultWrapper: RenderElement = (assigned) =>
+const defaultRender: RenderElement = (assigned) =>
   assigned ?? document.createElement('section')
 
 export function mergePageParts<T extends Section, S extends Section> (
   initialPart: T, coveringPart: S
 ): T & S {
-  initialPart.getWrapper ??= getDefaultWrapper
+  initialPart.render ??= defaultRender
 
   const { structure: initialStructure } = initialPart
   const { structure: coveringStructure } = coveringPart
@@ -91,11 +89,11 @@ let currentId = ''
 export async function renderSection (
   section: Section
 ): Promise<Element> {
-  section.getWrapper ??= getDefaultWrapper
-  const { getWrapper, properties, structure } = section
+  section.render ??= defaultRender
+  const { render, properties, structure } = section
 
   const sectionId = currentId
-  const sectionElement = await getElement(getWrapper)
+  const sectionElement = await getElement(render)
   Object.assign(sectionElement, properties)
 
   const remainingChildren = new Set(sectionElement.children)
