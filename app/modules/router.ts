@@ -1,4 +1,4 @@
-import type { Page } from '../app'
+import type { Page } from './page'
 
 type ParamKey = string
 interface ParamValues { [paramKey: string]: string[] }
