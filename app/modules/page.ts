@@ -23,9 +23,10 @@ type RegistryEntry = [RenderElement, keyof ElementList]
 const defaultRender: RenderElement = (assigned) =>
   assigned ?? document.createElement('section')
 
-export function mergePageParts<T extends Section, S extends Section> (
-  initialPart: T, coveringPart: S
-): T & S {
+export function mergePageParts<I extends Section, C extends Section> (
+  initialPart: I, coveringPart: C | I
+): I | (I & C) {
+  if (initialPart === coveringPart) return initialPart
   initialPart.render ??= defaultRender
 
   const { structure: initialStructure } = initialPart
@@ -62,8 +63,8 @@ const elementRegistry = new FinalizationRegistry((entry: RegistryEntry) => {
 
 async function getElement (render: RenderElement): Promise<Element> {
   const elementList = assignedElements.get(render)
-  const assigned = elementList?.get(currentId)?.deref()
-  const element = await render(assigned)
+  const usedElement = elementList?.get(currentId)?.deref()
+  const element = await render(usedElement)
 
   registerElement(render, element)
   return element
