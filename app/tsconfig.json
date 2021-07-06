@@ -9,6 +9,7 @@
       "DOM",
       "DOM.Iterable"
     ],
+    "incremental": true,
     "removeComments": true,
     "sourceMap": true,
     "outDir": ".bin"
