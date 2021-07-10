@@ -99,7 +99,7 @@ function mergeSectionItems (...itemParts: SectionItemParts): SectionItem {
 
   for (const part of itemParts) {
     if (part instanceof Function || isDefinedItem(part)) {
-      mergedItem = part
+      mergedItem = { ...part }
       structureParts = []
     }
     if ('structure' in part && mergedItem !== part) {
@@ -111,8 +111,12 @@ function mergeSectionItems (...itemParts: SectionItemParts): SectionItem {
       } else {
         structureParts.push(coveringStructure)
       }
-      (mergedItem as Section).structure = structureParts
     }
+  }
+  if (structureParts.length === 1) {
+    (mergedItem as Section).structure = structureParts[0]
+  } else if (structureParts.length > 1) {
+    (mergedItem as Section).structure = structureParts
   }
   return mergedItem
 }
