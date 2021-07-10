@@ -1,68 +1,69 @@
 import { documentMeta } from './document-meta.js'
 
-type Render = (previouslyUsed?: Element) => Element | Promise<Element>
+type Tag = keyof TagMap
+type TagMap = HTMLElementTagNameMap
+type TaggedRender<T extends Tag, M extends TagMap>
+  = (tag?: T) => M[T] | Promise<M[T]>
 
-type Part = Partial<Page>
+type Custom = Element
+type CustomRender<T extends Custom> = () => T | Promise<T>
+
+type Properties<T extends Element> = { [K in keyof T]?: T[K] }
+
+type Render = CustomRender<Custom> | TaggedRender<Tag, TagMap>
 type SectionItem = Render | Item | Section
-interface SectionStructure { [sectionItem: string]: SectionItem }
-type ElementProps = Partial<Pick<Element, 'id' | 'className' | 'slot'>>
+type SectionItemParts = SectionItem[]
+type StructureItem = SectionItem | SectionItemParts
+type SectionStructure = Record<string, StructureItem>
+type SectionStructureParts = SectionStructure[]
+type Structure = SectionStructure | SectionStructureParts
 
-export interface Item {
-  render?: Render
-  properties?: ElementProps
+interface UndefinedItem {
+  props?: Properties<TagMap[typeof defaultTag]>
 }
-export interface Section extends Item {
-  structure: SectionStructure
+interface TaggedItem<T extends Tag> {
+  tag: T
+  props?: Properties<TagMap[T]>
 }
-export interface Page extends Section {
+interface CustomedItem<T extends Custom> {
+  render: CustomRender<T>
+  props?: Properties<T>
+}
+interface SectionLike {
+  structure: Structure
+}
+interface PageLike {
   title: string
   description: string
 }
+type ItemType = Tag | Custom
+type DefinedItem<T extends ItemType>
+  = T extends Tag ? TaggedItem<T>
+    : T extends Custom ? CustomedItem<T>
+      : never
 
-type ElementList = Map<string, WeakRef<Element>>
+export type Item = UndefinedItem | DefinedItem<ItemType>
+export type Section = Item & SectionLike
+export type Page = Section & PageLike
+
+type ElementId = string
+type ElementList = Map<ElementId, WeakRef<Element>>
 type AssignedElements = WeakMap<Render, ElementList>
-type RegistryEntry = [Render, keyof ElementList]
 
-const defaultRender: Render = (assigned) =>
-  assigned ?? document.createElement('section')
+type RegistryEntry = [Render, ElementId]
 
-function mergeStructures (
-  initialStructure: SectionStructure,
-  coveringStructure?: SectionStructure
-): SectionStructure {
-  const mergedStructure = { ...initialStructure, ...coveringStructure }
+type DefaultRender = TaggedRender<Tag, TagMap>
 
-  for (const sectionName in coveringStructure) {
-    const initialSection = initialStructure[sectionName]
-    const coveringSection = coveringStructure[sectionName]
+const defaultTag: Tag = 'div'
+const defaultRender: DefaultRender =
+  (tag = defaultTag) => document.createElement(tag)
 
-    if (initialSection instanceof Function ||
-      coveringSection instanceof Function
-    ) continue
-
-    mergedStructure[sectionName] = initialSection != null
-      ? mergePageParts(initialSection, coveringSection)
-      : coveringSection
-  }
-  return mergedStructure
+function isDefinedItem<T extends Item> (item: T): boolean {
+  return 'tag' in item || 'render' in item
 }
-
-export function mergePageParts<I extends Part, C extends Part> (
-  initialPart: I extends infer P ? P : I,
-  coveringPart: C extends infer P ? P : C
-): I & C extends infer M ? M : I {
-  if (initialPart === coveringPart) return initialPart
-  initialPart.render ??= defaultRender
-
-  const mergedPart = { ...initialPart, ...coveringPart }
-  if (coveringPart.render == null && initialPart.structure != null) {
-    const { structure: initialStructure } = initialPart
-    const { structure: coveringStructure } = coveringPart
-    const structure = mergeStructures(initialStructure, coveringStructure)
-    mergedPart.structure = structure
-  }
-  return mergedPart
-}
+// function isSection<T extends Item | Section> (item: T): boolean {
+//   return 'structure' in item
+// }
 
 const assignedElements: AssignedElements = new WeakMap()
 
@@ -75,12 +76,12 @@ const elementRegistry = new FinalizationRegistry((entry: RegistryEntry) => {
   }
 })
 
-async function getElement (render: Render): Promise<Element> {
+async function getElement (render: Render, tag?: Tag): Promise<Element> {
   const elementList = assignedElements.get(render)
   const usedElement = elementList?.get(currentId)?.deref()
-  const element = await render(usedElement)
+  const element = usedElement ?? await render(tag)
 
-  registerElement(render, element)
+  if (element !== usedElement) registerElement(render, element)
   return element
 }
 
@@ -92,14 +93,101 @@ function registerElement (render: Render, element: Element): void {
   elementRegistry.register(element, [render, currentId])
 }
 
+function mergeSectionItems (...itemParts: SectionItemParts): SectionItem {
+  let mergedItem: StructureItem = {}
+  let structureParts: SectionStructureParts = []
+
+  for (const part of itemParts) {
+    if (part instanceof Function || isDefinedItem(part)) {
+      mergedItem = part
+      structureParts = []
+    }
+    if ('structure' in part && mergedItem !== part) {
+      const { structure: coveringStructure } = part
+
+      if (mergedItem instanceof Function) mergedItem = {}
+      if (Array.isArray(coveringStructure)) {
+        structureParts.push(...coveringStructure)
+      } else {
+        structureParts.push(coveringStructure)
+      }
+      (mergedItem as Section).structure = structureParts
+    }
+  }
+  return mergedItem
+}
+
+function mergeStructures (
+  ...structureParts: SectionStructureParts
+): SectionStructure {
+  const [initialPart, ...otherParts] = structureParts
+  const mergedStructure = { ...initialPart }
+
+  for (const part of otherParts) {
+    for (const itemName in part) {
+      let item = part[itemName]
+      if (Array.isArray(item)) item = mergeSectionItems(...item)
+
+      if (itemName in mergedStructure) {
+        const initialItem = mergedStructure[itemName]
+        if (Array.isArray(initialItem)) {
+          item = mergeSectionItems(...initialItem, item)
+        } else {
+          item = mergeSectionItems(initialItem, item)
+        }
+      }
+      mergedStructure[itemName] = item
+    }
+  }
+  return mergedStructure
+}
+
 let currentId = ''
 async function renderItem (item: Item): Promise<Element> {
-  item.render ??= defaultRender
-  const { render, properties } = item
-  const itemElement = await getElement(render)
+  let itemElement: Element
+  const { props } = item
 
-  Object.assign(itemElement, properties)
+  if ('render' in item) {
+    const { render } = item
+    itemElement = await getElement(render)
+  } else if ('tag' in item) {
+    const { tag } = item
+    itemElement = await getElement(defaultRender, tag)
+  } else {
+    itemElement = await getElement(defaultRender)
+  }
+  Object.assign(itemElement, props)
   return itemElement
+}
+
+async function renderSection (Section: Section): Promise<Element> {
+  const sectionId = currentId
+  const { structure } = Section
+  const sectionStructure = Array.isArray(structure)
+    ? mergeStructures(...structure)
+    : structure
+  const sectionElement = await renderItem(Section)
+
+  const remainingChildren = new Set(sectionElement.children)
+  const replenishment: Set<Element> = new Set()
+
+  for (const itemName in sectionStructure) {
+    currentId = `${sectionId}:${itemName}`
+    const item = sectionStructure[itemName]
+    const sectionItem = Array.isArray(item)
+      ? mergeSectionItems(...item)
+      : item
+    const itemElement = await renderSectionItem(sectionItem)
+
+    if (sectionElement.contains(itemElement)) {
+      remainingChildren.delete(itemElement)
+    } else replenishment.add(itemElement)
+  }
+  for (const wasteElement of remainingChildren) {
+    wasteElement.remove()
+  }
+  sectionElement.append(...replenishment)
+  return sectionElement
 }
 
 async function renderSectionItem (
@@ -118,36 +206,13 @@ async function renderSectionItem (
   return sectionItemElement
 }
 
-export async function renderSection (section: Section): Promise<Element> {
-  const sectionId = currentId
-  const { structure } = section
-  const sectionElement = await renderItem(section)
-
-  const remainingChildren = new Set(sectionElement.children)
-  const replenishment: Set<Element> = new Set()
-
-  for (const itemName in structure) {
-    currentId = `${sectionId}:${itemName}`
-    const item = structure[itemName]
-    const itemElement = await renderSectionItem(item)
-
-    if (sectionElement.contains(itemElement)) {
-      remainingChildren.delete(itemElement)
-    } else {
-      replenishment.add(itemElement)
-    }
-  }
-  for (const wasteElement of remainingChildren) {
-    wasteElement.remove()
-  }
-  sectionElement.append(...replenishment)
-  return sectionElement
-}
-
-export async function renderPage (page: Page): Promise<Element> {
-  document.title = page.title
-  documentMeta.description = page.description
+export async function renderPage (
+  initialPage: Page, ...pageParts: Array<Partial<Page>>
+): Promise<Element> {
+  document.title = initialPage.title
+  documentMeta.description = initialPage.description
 
   currentId = ''
-  return await renderSection(page)
+  const page = mergeSectionItems(initialPage, ...pageParts)
+  return await renderSectionItem(page)
 }

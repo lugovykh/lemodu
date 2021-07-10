@@ -1,6 +1,6 @@
 import Router from './modules/router.js'
 
-import { Page, mergePageParts, renderPage } from './modules/page.js'
+import { Page, renderPage } from './modules/page.js'
 
 import Menu from './modules/menu.js'
 
@@ -61,24 +61,23 @@ const initialPagePart: Page = {
   render: () => app,
   structure: {
     header: {
-      render: (used) => used ?? document.createElement('header'),
-      properties: { slot: 'header' },
+      tag: 'header',
+      props: { slot: 'header' },
       structure: {
-        mainMenu: (used) => used ?? new Menu()
+        mainMenu: { render: () => new Menu() }
       }
     },
     main: {
-      render: (used) => used ?? document.createElement('main')
+      tag: 'main'
     }
   }
 }
 
 class App extends HTMLElement {
-  page?: Page
+  page?: Partial<Page>
 
   constructor () {
     super()
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shadowRoot: any = this.attachShadow({ mode: 'open' })
     shadowRoot.adoptedStyleSheets = [styleSheet]
@@ -100,12 +99,9 @@ class App extends HTMLElement {
   }
 
   async render (): Promise<void> {
-    const { page: dynamicPagePart } = this
-    const mergedPage = dynamicPagePart != null
-      ? mergePageParts(initialPagePart, dynamicPagePart)
-      : initialPagePart
+    const { page: dynamicPagePart = {} } = this
 
-    await renderPage(mergedPage)
+    await renderPage(initialPagePart, dynamicPagePart)
   }
 }
 
