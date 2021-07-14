@@ -36,13 +36,8 @@ interface PageLike {
   title: string
   description: string
 }
-type ItemType = Tag | Custom
-type DefinedItem<T extends ItemType>
-  = T extends Tag ? TaggedItem<T>
-    : T extends Custom ? CustomedItem<T>
-      : never
 
-export type Item = UndefinedItem | DefinedItem<ItemType>
+export type Item = TaggedItem<Tag> | CustomedItem<Custom> | UndefinedItem
 export type Section = Item & SectionLike
 export type Page = Section & PageLike
 
@@ -61,9 +56,6 @@ const defaultRender: DefaultRender =
 function isDefinedItem<T extends Item> (item: T): boolean {
   return 'tag' in item || 'render' in item
 }
-// function isSection<T extends Item | Section> (item: T): boolean {
-//   return 'structure' in item
-// }
 
 const assignedElements: AssignedElements = new WeakMap()
 
@@ -95,27 +87,35 @@ function registerElement (render: Render, element: Element): void {
 
 function mergeSectionItems (...itemParts: SectionItemParts): SectionItem {
   let mergedItem: StructureItem = {}
+  let mergedProps: Properties<Element> = {}
   let structureParts: SectionStructureParts = []
 
   for (const part of itemParts) {
-    if (part instanceof Function || isDefinedItem(part)) {
-      mergedItem = { ...part }
+    if (part instanceof Function) {
+      mergedItem = part
+      mergedProps = {}
       structureParts = []
+    } else if (isDefinedItem(part)) {
+      mergedItem = { ...part }
+      mergedProps = {}
+      structureParts = []
+    } else {
+      mergedItem = { ...mergedItem, ...part }
     }
-    if ('structure' in part && mergedItem !== part) {
-      const { structure: coveringStructure } = part
-
-      if (mergedItem instanceof Function) mergedItem = {}
-      if (Array.isArray(coveringStructure)) {
-        structureParts.push(...coveringStructure)
+    if ('props' in part) {
+      const { props } = part
+      Object.assign(mergedProps, props)
+    }
+    if ('structure' in part) {
+      const { structure } = part
+      if (Array.isArray(structure)) {
+        structureParts.push(...structure)
       } else {
-        structureParts.push(coveringStructure)
+        structureParts.push(structure)
       }
     }
   }
-  if (structureParts.length === 1) {
-    (mergedItem as Section).structure = structureParts[0]
-  } else if (structureParts.length > 1) {
+  if (structureParts.length > 1) {
     (mergedItem as Section).structure = structureParts
   }
   return mergedItem
@@ -146,6 +146,7 @@ function mergeStructures (
   return mergedStructure
 }
 
+const idSeparator = ':'
 let currentId = ''
 async function renderItem (item: Item): Promise<Element> {
   let itemElement: Element
@@ -176,7 +177,7 @@ async function renderSection (Section: Section): Promise<Element> {
   const replenishment: Set<Element> = new Set()
 
   for (const itemName in sectionStructure) {
-    currentId = `${sectionId}:${itemName}`
+    currentId = `${sectionId}${idSeparator}${itemName}`
     const item = sectionStructure[itemName]
     const sectionItem = Array.isArray(item)
       ? mergeSectionItems(...item)
