@@ -87,24 +87,21 @@ function registerElement (render: Render, element: Element): void {
 
 function mergeSectionItems (...itemParts: SectionItemParts): SectionItem {
   let mergedItem: StructureItem = {}
-  let mergedProps: Properties<Element> = {}
   let structureParts: SectionStructureParts = []
 
   for (const part of itemParts) {
     if (part instanceof Function) {
       mergedItem = part
-      mergedProps = {}
       structureParts = []
-    } else if (isDefinedItem(part)) {
+    } else if (isDefinedItem(part) || mergedItem instanceof Function) {
       mergedItem = { ...part }
-      mergedProps = {}
       structureParts = []
     } else {
+      const initialItem = mergedItem
       mergedItem = { ...mergedItem, ...part }
-    }
-    if ('props' in part) {
-      const { props } = part
-      Object.assign(mergedProps, props)
+      if ('props' in initialItem && 'props' in part) {
+        mergedItem.props = { ...initialItem.props, ...part.props }
+      }
     }
     if ('structure' in part) {
       const { structure } = part
