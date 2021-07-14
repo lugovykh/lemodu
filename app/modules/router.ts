@@ -67,11 +67,11 @@ export default class Router {
     this.#handleRoute().catch(console.log)
   }
 
-  #handleRoute = async (page?: Page): Promise<void> => {
+  async #handleRoute (page?: Page): Promise<void> {
     await this.#handler?.(page ?? await this.getPage())
   }
 
-  #handleClick = async (e: MouseEvent): Promise<void> => {
+  async #handleClick (e: MouseEvent): Promise<void> {
     if (e.altKey || e.ctrlKey || e.shiftKey) return
 
     const link = e.composedPath().find(isLink)
@@ -82,7 +82,7 @@ export default class Router {
   }
 
   #deleteClickListener?: () => void
-  #setClickListener = (): void => {
+  #setClickListener (): void {
     if (this.#deleteClickListener != null) return
 
     const clickListener = (e: MouseEvent): void => {
@@ -96,7 +96,7 @@ export default class Router {
   }
 
   #deletePopstateListener?: () => void
-  #setPopstateListener = (): void => {
+  #setPopstateListener (): void {
     if (this.#deletePopstateListener != null) return
 
     const popstateListener = (): void => {
