@@ -1,6 +1,6 @@
-import { serve } from 'https://deno.land/std@0.93.0/http/server.ts'
-import * as path from 'https://deno.land/std@0.93.0/path/mod.ts'
-import { MongoClient, Bson } from 'https://deno.land/x/mongo@v0.22.0/mod.ts'
+import { serve } from 'https://deno.land/std@0.101.0/http/server.ts'
+import * as path from 'https://deno.land/std@0.101.0/path/mod.ts'
+import { MongoClient, Bson } from 'https://deno.land/x/mongo@v0.23.1/mod.ts'
 
 const hostname = 'localhost'
 const port = 8000
