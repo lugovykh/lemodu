@@ -1,7 +1,7 @@
 import { documentMeta } from './document-meta.js'
 
 type Tag = keyof TagMap
-type TagMap = HTMLElementTagNameMap
+type TagMap = HTMLElementTagNameMap & SVGElementTagNameMap
 type TaggedRender<T extends Tag, M extends TagMap>
   = (tag?: T) => M[T] | Promise<M[T]>
 
@@ -9,8 +9,9 @@ type CustomRender<T extends Element> = () => T | Promise<T>
 
 type Properties<T extends Element> = { [K in keyof T]?: T[K] }
 
-type ItemRender = CustomRender<Element>
+type DefaultTag = typeof defaultTag
 type DefaultRender = TaggedRender<Tag, TagMap>
+type ItemRender = CustomRender<Element>
 
 type SectionItem = ItemRender | Item | Section
 type SectionItemParts = SectionItem[]
@@ -20,7 +21,7 @@ type StructureParts = Structure[]
 type SectionStructure = Structure | StructureParts
 
 interface UndefinedItem {
-  props?: Properties<TagMap[typeof defaultTag]>
+  props?: Properties<TagMap[DefaultTag]>
 }
 interface TaggedItem<T extends Tag> {
   tag: T
@@ -38,7 +39,15 @@ interface PageLike {
   description: string
 }
 
-export type Item = TaggedItem<Tag> | CustomedItem<Element> | UndefinedItem
+type DefinedItem<T>
+  = T extends Tag ? TaggedItem<T>
+    : T extends Element ? CustomedItem<T>
+      : never
+
+export type Item =
+  | UndefinedItem
+  | DefinedItem<Tag>
+  | DefinedItem<Element>
 export type Section = Item & SectionLike
 export type Page = Section & PageLike
 
