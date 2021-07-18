@@ -5,18 +5,19 @@ type TagMap = HTMLElementTagNameMap
 type TaggedRender<T extends Tag, M extends TagMap>
   = (tag?: T) => M[T] | Promise<M[T]>
 
-type Custom = Element
-type CustomRender<T extends Custom> = () => T | Promise<T>
+type CustomRender<T extends Element> = () => T | Promise<T>
 
 type Properties<T extends Element> = { [K in keyof T]?: T[K] }
 
-type Render = CustomRender<Custom> | TaggedRender<Tag, TagMap>
-type SectionItem = Render | Item | Section
+type ItemRender = CustomRender<Element>
+type DefaultRender = TaggedRender<Tag, TagMap>
+
+type SectionItem = ItemRender | Item | Section
 type SectionItemParts = SectionItem[]
 type StructureItem = SectionItem | SectionItemParts
-type SectionStructure = Record<string, StructureItem>
-type SectionStructureParts = SectionStructure[]
-type Structure = SectionStructure | SectionStructureParts
+type Structure = Record<string, StructureItem>
+type StructureParts = Structure[]
+type SectionStructure = Structure | StructureParts
 
 interface UndefinedItem {
   props?: Properties<TagMap[typeof defaultTag]>
@@ -25,19 +26,19 @@ interface TaggedItem<T extends Tag> {
   tag: T
   props?: Properties<TagMap[T]>
 }
-interface CustomedItem<T extends Custom> {
+interface CustomedItem<T extends Element> {
   render: CustomRender<T>
   props?: Properties<T>
 }
 interface SectionLike {
-  structure: Structure
+  structure: SectionStructure
 }
 interface PageLike {
   title: string
   description: string
 }
 
-export type Item = TaggedItem<Tag> | CustomedItem<Custom> | UndefinedItem
+export type Item = TaggedItem<Tag> | CustomedItem<Element> | UndefinedItem
 export type Section = Item & SectionLike
 export type Page = Section & PageLike
 
@@ -45,9 +46,8 @@ type ElementId = string
 type ElementList = Map<ElementId, WeakRef<Element>>
 type AssignedElements = WeakMap<Render, ElementList>
 
+type Render = ItemRender | DefaultRender
 type RegistryEntry = [Render, ElementId]
-
-type DefaultRender = TaggedRender<Tag, TagMap>
 
 const defaultTag: Tag = 'div'
 const defaultRender: DefaultRender =
@@ -111,8 +111,8 @@ function mergeSectionItems (...itemParts: SectionItemParts): SectionItem {
 }
 
 function mergeStructures (
-  ...structureParts: SectionStructureParts
-): SectionStructure {
+  ...structureParts: StructureParts
+): Structure {
   const [initialPart, ...otherParts] = structureParts
   const mergedStructure = { ...initialPart }
 
