@@ -119,15 +119,10 @@ function mergeStructures (
   for (const part of otherParts) {
     for (const itemName in part) {
       let item = part[itemName]
-      if (Array.isArray(item)) item = mergeSectionItems(...item)
 
       if (itemName in mergedStructure) {
         const initialItem = mergedStructure[itemName]
-        if (Array.isArray(initialItem)) {
-          item = mergeSectionItems(...initialItem, item)
-        } else {
-          item = mergeSectionItems(initialItem, item)
-        }
+        item = [initialItem, item].flat()
       }
       mergedStructure[itemName] = item
     }
